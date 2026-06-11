@@ -214,7 +214,6 @@
             event.target.classList.add('active');
         }
 
-        // Fixed Sandbox Interceptor (Escaped </script> tag!)
         window.addEventListener('message', function(e) {
             if (e.data && e.data.source === 'flash-sandbox') logToUiConsole(e.data.text, e.data.type);
         });
@@ -281,16 +280,18 @@
             const iframe = document.createElement('iframe');
             iframe.className = 'app-workspace-iframe';
             
-            // NOTE THE ESCAPED \/script BELOW!
-            const internalInterceptorScript = `
-                <script>
-                    window.onerror = function(msg, url, line) { window.parent.postMessage({source: 'flash-sandbox', type: 'error', text: msg}, '*'); return false; };
-                    ['log', 'warn', 'error'].forEach(type => {
-                        const original = console[type];
-                        console[type] = function(...args) { window.parent.postMessage({source: 'flash-sandbox', type: type, text: args.join(' ')}, '*'); original.apply(console, args); };
-                    });
-                <\/script>
-            `;
+            // BULLETPROOF FIX: Break the string so the browser never sees a full script tag sequence.
+            const sOpen = '<sc' + 'ript>';
+            const sClose = '</sc' + 'ript>';
+            
+            const internalInterceptorScript = sOpen + `
+                window.onerror = function(msg, url, line) { window.parent.postMessage({source: 'flash-sandbox', type: 'error', text: msg}, '*'); return false; };
+                ['log', 'warn', 'error'].forEach(type => {
+                    const original = console[type];
+                    console[type] = function(...args) { window.parent.postMessage({source: 'flash-sandbox', type: type, text: args.join(' ')}, '*'); original.apply(console, args); };
+                });
+            ` + sClose;
+            
             iframe.srcdoc = internalInterceptorScript + htmlCode;
             contentArea.appendChild(iframe);
         }
