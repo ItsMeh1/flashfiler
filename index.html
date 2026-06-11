@@ -3,192 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Filer | Workstation OS</title>
+    <title>Flash Filer | OS X</title>
     
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     
     <style>
         :root {
-            --bg-main: #070a12;
-            --text-main: #f8fafc;
-            --text-muted: #64748b;
-            --accent: #10b981; /* Emerald branding */
-            --glass-bg: rgba(15, 23, 42, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.05);
-            --glass-highlight: rgba(255, 255, 255, 0.02);
+            /* SPOTIFY COLOR PALETTE */
+            --bg-base: #000000;
+            --bg-main: #121212;
+            --bg-elevated: #242424;
+            --bg-hover: #2a2a2a;
+            --text-main: #ffffff;
+            --text-muted: #b3b3b3;
+            --accent: #1db954; /* Spotify Green */
+            
             --sidebar-width: 320px;
+            --player-height: 90px;
+
+            /* Custom Plyr Overrides for Bottom Bar */
+            --plyr-color-main: var(--accent);
+            --plyr-audio-controls-background: transparent;
+            --plyr-audio-controls-color: var(--text-main);
         }
 
         body, html {
             margin: 0; padding: 0; height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-            background-color: var(--bg-main); color: var(--text-main);
-            display: flex; flex-direction: column; overflow: hidden;
+            font-family: "Circular Std", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: var(--bg-base); color: var(--text-main);
+            overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* LIQUID BACKGROUND BLOBS */
-        .ambient-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden; z-index: 1; pointer-events: none;
-        }
-        .liquid-blob {
-            position: absolute; width: 700px; height: 700px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
-            filter: blur(120px); animation: morphLiquid 20s infinite alternate ease-in-out;
-        }
-        .blob-1 { top: -20%; left: -10%; }
-        
-        @keyframes morphLiquid {
-            0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: scale(1); }
-            100% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: scale(1.1) translate(30px, -30px); }
+        /* MASTER LAYOUT */
+        #app-wrapper {
+            flex: 1; display: flex; height: calc(100% - var(--player-height));
         }
 
-        .interface-layer { position: relative; z-index: 2; width: 100%; height: 100%; display: flex; flex-direction: column; }
+        /* LEFT: MAIN WORKSPACE (Video/Apps) */
+        #workspace-area {
+            flex: 1; background-color: var(--bg-main); border-radius: 8px;
+            margin: 8px; margin-right: 4px; position: relative;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
 
-        /* LANDING PAGE DROPAREA */
+        /* RIGHT: SIDEBAR (Queue/CLI) */
+        #sidebar-area {
+            width: var(--sidebar-width); background-color: var(--bg-main); border-radius: 8px;
+            margin: 8px 8px 8px 4px; display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* BOTTOM: SPOTIFY MEDIA BAR */
+        #bottom-media-bar {
+            height: var(--player-height); background-color: var(--bg-base);
+            border-top: 1px solid #282828; display: flex; align-items: center; padding: 0 16px;
+            box-sizing: border-box; justify-content: space-between;
+        }
+
+        /* LANDING PAGE UI */
         #upload-screen {
-            flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column;
-            padding: 40px 20px; box-sizing: border-box;
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            background: var(--bg-main); z-index: 10; border-radius: 8px;
         }
-        .brand-logo { font-size: 3rem; font-weight: 800; margin: 0; background: linear-gradient(180deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.05em; }
+        .brand-logo { font-size: 3rem; font-weight: 800; margin: 0; letter-spacing: -0.05em; color: var(--text-main); }
         .brand-tagline { color: var(--text-muted); font-size: 1rem; margin: 8px 0 32px 0; }
         
-        .glass-btn {
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); color: var(--text-main);
-            padding: 16px 40px; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 var(--glass-highlight);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        .spot-btn {
+            background: var(--text-main); color: #000; border: none;
+            padding: 14px 36px; border-radius: 30px; font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
         }
-        .glass-btn:hover { background: rgba(255, 255, 255, 0.05); border-color: var(--accent); transform: translateY(-2px); }
+        .spot-btn:hover { background: var(--accent); transform: scale(1.04); color: #fff; }
         input[type="file"] { display: none; }
 
-        /* WORKSPACE PANELS */
-        #viewer-container { display: none; width: 100%; height: 100%; flex-direction: row; position: relative; }
-        #content-area { flex: 1; height: 100%; display: flex; justify-content: center; align-items: center; background: #020408; position: relative; }
+        /* SIDEBAR TABS */
+        .sidebar-tabs { display: flex; padding: 12px 16px 0; gap: 16px; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); font-weight: 700; font-size: 13px; cursor: pointer; padding-bottom: 8px; transition: color 0.2s; }
+        .tab-btn.active { color: var(--text-main); }
         
-        /* SIDEBAR COMPONENT SYSTEM */
-        .workspace-sidebar {
-            width: var(--sidebar-width); height: 100%; background: rgba(10, 15, 30, 0.85);
-            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border-left: 1px solid var(--glass-border); display: flex; flex-direction: column;
-        }
-
-        .sidebar-tabs { display: flex; border-bottom: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); }
-        .tab-btn { flex: 1; padding: 14px; background: none; border: none; color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
-        .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); background: rgba(255,255,255,0.02); }
-        
-        .panel-content { flex: 1; overflow-y: auto; display: none; padding: 20px; box-sizing: border-box; }
+        .panel-content { flex: 1; overflow-y: auto; display: none; padding: 16px; box-sizing: border-box; }
         .panel-content.active { display: block; }
 
-        /* SIDEBAR 1: SPOTIFY MUSIC QUEUE */
-        .playlist-header { font-size: 14px; font-weight: 700; margin-bottom: 15px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-        .queue-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-        .queue-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
-        .queue-item:hover { background: rgba(255,255,255,0.05); }
-        .queue-item.playing { border-color: var(--accent); background: rgba(16, 185, 129, 0.05); }
-        .queue-item.playing .track-title { color: var(--accent); font-weight: 600; }
-        .track-index { font-size: 12px; color: var(--text-muted); width: 15px; }
-        .track-details { flex: 1; overflow: hidden; }
-        .track-title { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+        /* SPOTIFY PLAYLIST UI */
+        .queue-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+        .queue-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .queue-item:hover { background: var(--bg-hover); }
+        .queue-item.playing { background: var(--bg-elevated); }
+        .queue-item.playing .track-title { color: var(--accent); }
+        .track-index { font-size: 14px; color: var(--text-muted); width: 20px; text-align: center; }
+        .track-title { font-size: 14px; color: var(--text-main); font-weight: 500; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* TERMINAL & CONSOLE UI */
+        .console-stream { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .log-entry { color: var(--text-muted); word-break: break-all; }
+        .log-entry.error { color: #ff6b6b; }
+        .log-entry.warn { color: #fcca46; }
+
+        .terminal-panel { height: 160px; background: #000; display: flex; flex-direction: column; font-family: "SFMono-Regular", Consolas, monospace; border-top: 1px solid #282828; }
+        .terminal-stream { flex: 1; padding: 12px; overflow-y: auto; font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; }
+        .terminal-row { display: flex; gap: 8px; align-items: center; padding: 8px 12px; background: #121212; }
+        .terminal-prompt { color: var(--accent); font-weight: bold; }
+        .terminal-input { flex: 1; background: none; border: none; outline: none; color: #fff; font-family: inherit; font-size: 12px; }
+
+        /* WORKSPACE MEDIA CONTAINERS */
+        .plyr-video-container { width: 90%; max-height: 90%; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .premium-image-frame { max-width: 90%; max-height: 90%; border-radius: 8px; }
+        .app-workspace-iframe { width: 100%; height: 100%; border: none; background: #fff; border-radius: 8px; }
+
+        /* BOTTOM BAR: TRACK INFO & PLAYER */
+        .now-playing-info { width: 30%; display: flex; align-items: center; gap: 12px; }
+        .now-playing-title { font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .now-playing-status { font-size: 11px; color: var(--text-muted); }
         
-        /* SIDEBAR 2: SANDBOX ENGINE CONSOLE LOGS */
-        .console-controls { display: flex; justify-content: space-between; margin-bottom: 12px; }
-        .clear-console-btn, .iframe-refresh-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
-        .clear-console-btn:hover, .iframe-refresh-btn:hover { background: rgba(239, 68, 68, 0.2); }
-        .iframe-refresh-btn:hover { background: rgba(16, 185, 129, 0.2); }
-        .console-stream { font-family: "SFMono-Regular", Consolas, Menlo, monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .log-entry { padding: 6px 10px; border-radius: 6px; border-left: 3px solid #64748b; background: rgba(255,255,255,0.01); word-break: break-all; }
-        .log-entry.error { border-left-color: #ef4444; background: rgba(239, 68, 68, 0.05); color: #fecaca; }
-        .log-entry.warn { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.05); color: #fef3c7; }
-
-        /* ADVANCED CLI TERMINAL PANEL */
-        .terminal-panel { height: 180px; background: #03050a; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; font-family: "SFMono-Regular", Consolas, monospace; }
-        .terminal-stream { flex: 1; padding: 15px; overflow-y: auto; font-size: 12px; color: #a7f3d0; display: flex; flex-direction: column; gap: 4px; }
-        .terminal-row { display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,0.3); padding: 10px 15px; border-top: 1px solid rgba(255,255,255,0.02); }
-        .terminal-prompt { color: var(--accent); font-weight: bold; font-size: 13px; }
-        .terminal-input { flex: 1; background: none; border: none; outline: none; color: #fff; font-family: inherit; font-size: 13px; }
-
-        /* WORKSPACE MEDIA CONTAINER STYLES */
-        .plyr-video-container { width: 85%; max-height: 85%; border-radius: 16px; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
-        .plyr-audio-container { width: 450px; padding: 16px; border-radius: 20px; background: var(--glass-bg); border: 1px solid var(--glass-border); }
-        .premium-image-frame { max-width: 80%; max-height: 80%; border-radius: 16px; overflow: hidden; border: 1px solid var(--glass-border); }
-        .premium-image { max-width: 100%; max-height: 100%; display: block; }
-        .app-workspace-iframe { width: 100%; height: 100%; border: none; background: #fff; }
-
-        /* MASTER SYSTEM NAVIGATION FLOAT BAR */
-        #bottom-overlay {
-            position: absolute; bottom: 20px; left: 40px;
-            background: rgba(10, 15, 26, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            padding: 10px 20px; border-radius: 14px; display: flex; align-items: center; gap: 14px;
-            border: 1px solid var(--glass-border); box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 1000;
-        }
-        .overlay-btn { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s; }
-        .overlay-btn:hover { background: rgba(255,255,255,0.1); }
-        .overlay-btn.exit { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .overlay-btn.exit:hover { background: #ef4444; color: #fff; }
-        #file-name { font-weight: 600; font-size: 13px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; border-right: 1px solid rgba(255,255,255,0.1); }
+        .player-center-console { width: 40%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .player-controls-wrapper { width: 100%; max-width: 600px; }
+        
+        .player-actions-right { width: 30%; display: flex; justify-content: flex-end; }
+        .exit-btn { background: transparent; color: var(--text-muted); border: 1px solid var(--text-muted); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .exit-btn:hover { border-color: #fff; color: #fff; }
     </style>
 </head>
 <body>
 
-    <div class="ambient-bg"><div class="liquid-blob blob-1"></div></div>
-
-    <div class="interface-layer">
+    <div id="app-wrapper">
         
-        <div id="upload-screen">
-            <h1 class="brand-logo">Flash Filer</h1>
-            <p class="brand-tagline">Advanced Media Runtime & Code Execution Sandbox</p>
-            <label for="file-input" class="glass-btn">Import Document(s)</label>
-            <input type="file" id="file-input" accept="image/*,video/*,audio/*,.html" multiple>
-        </div>
-
-        <div id="viewer-container">
-            
-            <div id="content-area">
-                <div id="bottom-overlay">
-                    <span id="file-name">System Node</span>
-                    <button class="overlay-btn exit" id="close-btn">Exit Sandbox</button>
-                </div>
+        <div id="workspace-area">
+            <div id="upload-screen">
+                <h1 class="brand-logo">Flash Filer</h1>
+                <p class="brand-tagline">Web OS & Audio Environment</p>
+                <label for="file-input" class="spot-btn">Import Media</label>
+                <input type="file" id="file-input" accept="image/*,video/*,audio/*,.html" multiple>
             </div>
             
-            <div class="workspace-sidebar">
-                <div class="sidebar-tabs">
-                    <button class="tab-btn active" onclick="switchTab('spotify-tab')">🎵 Spotify Track List</button>
-                    <button class="tab-btn" onclick="switchTab('console-tab')">🛠 Sandbox Debugger</button>
-                </div>
+            <div id="content-render-target"></div>
+        </div>
 
-                <div id="spotify-tab" class="panel-content active">
-                    <div class="playlist-header">
-                        <span>Current Session Playlist</span>
-                    </div>
-                    <ul class="queue-list" id="track-queue-target"></ul>
-                </div>
+        <div id="sidebar-area">
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" onclick="switchTab('spotify-tab')">Queue</button>
+                <button class="tab-btn" onclick="switchTab('console-tab')">Logs</button>
+            </div>
 
-                <div id="console-tab" class="panel-content">
-                    <div class="console-controls">
-                        <button class="clear-console-btn" onclick="clearConsoleLog()">Wipe History</button>
-                        <button class="iframe-refresh-btn" id="iframe-reload-trigger">Reload Script</button>
-                    </div>
-                    <div class="console-stream" id="console-stream-target">
-                        <div class="log-entry">Debugger listener hooked. Waiting for compilation array logs...</div>
-                    </div>
-                </div>
+            <div id="spotify-tab" class="panel-content active">
+                <ul class="queue-list" id="track-queue-target"></ul>
+            </div>
 
-                <div class="terminal-panel">
-                    <div class="terminal-stream" id="terminal-stream-target">
-                        <div>Flash Shell Terminal v1.4.2</div>
-                        <div>Type 'help' to see active core system overrides.</div>
-                    </div>
-                    <div class="terminal-row">
-                        <span class="terminal-prompt">$</span>
-                        <input type="text" class="terminal-input" id="cli-input-field" placeholder="Execute environment command...">
-                    </div>
+            <div id="console-tab" class="panel-content">
+                <div class="console-stream" id="console-stream-target">
+                    <div class="log-entry">System ready...</div>
                 </div>
             </div>
 
+            <div class="terminal-panel">
+                <div class="terminal-stream" id="terminal-stream-target">
+                    <div>Flash Shell v2.0</div>
+                </div>
+                <div class="terminal-row">
+                    <span class="terminal-prompt">~</span>
+                    <input type="text" class="terminal-input" id="cli-input-field" placeholder="command...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bottom-media-bar">
+        <div class="now-playing-info">
+            <div>
+                <div class="now-playing-title" id="bar-track-title">Idle</div>
+                <div class="now-playing-status" id="bar-track-status">No media selected</div>
+            </div>
+        </div>
+        
+        <div class="player-center-console">
+            <div class="player-controls-wrapper" id="audio-player-mount">
+                </div>
         </div>
 
+        <div class="player-actions-right">
+            <button class="exit-btn" id="close-btn">Clear Workspace</button>
+        </div>
     </div>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
@@ -196,22 +189,24 @@
     <script>
         const fileInput = document.getElementById('file-input');
         const uploadScreen = document.getElementById('upload-screen');
-        const viewerContainer = document.getElementById('viewer-container');
-        const contentArea = document.getElementById('content-area');
+        const contentArea = document.getElementById('content-render-target');
         const closeBtn = document.getElementById('close-btn');
-        const fileNameDisplay = document.getElementById('file-name');
         const trackQueueTarget = document.getElementById('track-queue-target');
         const consoleStreamTarget = document.getElementById('console-stream-target');
-        const iframeReloadTrigger = document.getElementById('iframe-reload-trigger');
         const cliInputField = document.getElementById('cli-input-field');
         const terminalStreamTarget = document.getElementById('terminal-stream-target');
+        
+        // Bottom Bar Elements
+        const barTrackTitle = document.getElementById('bar-track-title');
+        const barTrackStatus = document.getElementById('bar-track-status');
+        const audioPlayerMount = document.getElementById('audio-player-mount');
 
-        let plyrInstance = null;
+        let plyrVideoInstance = null;
+        let plyrAudioInstance = null;
         let mediaQueue = [];
         let currentTrackIndex = -1;
         let currentHTMLRaw = ""; 
 
-        // Cross-Tab Navigator Systems
         function switchTab(tabId) {
             document.querySelectorAll('.panel-content').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -219,75 +214,56 @@
             event.target.classList.add('active');
         }
 
-        // Iframe sandboxing console pipeline capture logic
+        // Fixed Sandbox Interceptor (Escaped </script> tag!)
         window.addEventListener('message', function(e) {
-            if (e.data && e.data.source === 'flash-sandbox') {
-                logToUiConsole(e.data.text, e.data.type);
-            }
+            if (e.data && e.data.source === 'flash-sandbox') logToUiConsole(e.data.text, e.data.type);
         });
 
         function logToUiConsole(text, type = 'log') {
             const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = `> ${text}`;
+            entry.className = `log-entry ${type}`; entry.textContent = `> ${text}`;
             consoleStreamTarget.appendChild(entry);
             consoleStreamTarget.scrollTop = consoleStreamTarget.scrollHeight;
         }
 
-        function clearConsoleLog() {
-            consoleStreamTarget.innerHTML = '<div class="log-entry">Console log clear performed.</div>';
-        }
-
-        // Processing Document Inputs Pipeline
+        // File Handler
         fileInput.addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
+            uploadScreen.style.display = 'none';
             const audioFiles = files.filter(f => f.type.startsWith('audio/'));
             
             if (audioFiles.length > 0) {
-                // Spotify System Path Execution Engine
                 const startIdx = mediaQueue.length;
                 audioFiles.forEach(file => {
-                    mediaQueue.push({
-                        name: file.name,
-                        url: URL.createObjectURL(file),
-                        type: 'audio'
-                    });
+                    mediaQueue.push({ name: file.name, url: URL.createObjectURL(file), type: 'audio' });
                 });
                 renderSpotifyQueueUi();
-                if (currentTrackIndex === -1) {
-                    playTrack(startIdx);
-                }
+                if (currentTrackIndex === -1) playTrack(startIdx);
                 switchTab('spotify-tab');
-                launchWorkspace("Audio Playlist Stream Engine");
             } else {
-                // Handling Singular Specialized Core View Documents
-                const file = files[0];
-                fileNameDisplay.textContent = file.name;
-                executeFileRenderPipeline(file);
+                executeMainWorkspacePipeline(files[0]);
             }
         });
 
-        function executeFileRenderPipeline(file) {
-            cleanActiveInstances();
+        function executeMainWorkspacePipeline(file) {
+            cleanMainWorkspace();
             const fileUrl = URL.createObjectURL(file);
+            barTrackTitle.textContent = file.name;
+            barTrackStatus.textContent = "Visual Media";
 
             if (file.type.startsWith('image/')) {
-                const frame = document.createElement('div');
-                frame.className = 'premium-image-frame';
                 const img = document.createElement('img');
-                img.src = fileUrl; img.className = 'premium-image';
-                frame.appendChild(img); contentArea.appendChild(frame);
-                launchWorkspace(file.name);
+                img.src = fileUrl; img.className = 'premium-image-frame';
+                contentArea.appendChild(img);
 
             } else if (file.type.startsWith('video/')) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'plyr-video-container';
-                wrapper.innerHTML = `<video id="flash-plyr" playsinline controls src="${fileUrl}"></video>`;
+                wrapper.innerHTML = `<video id="flash-plyr-video" playsinline controls src="${fileUrl}"></video>`;
                 contentArea.appendChild(wrapper);
-                plyrInstance = new Plyr('#flash-plyr', { controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'] });
-                launchWorkspace(file.name);
+                plyrVideoInstance = new Plyr('#flash-plyr-video');
 
             } else if (file.type === 'text/html' || file.name.endsWith('.html')) {
                 const reader = new FileReader();
@@ -297,58 +273,36 @@
                 };
                 reader.readAsText(file);
                 switchTab('console-tab');
-                launchWorkspace(file.name);
             }
         }
 
-        // Script Injection Interceptor to pipe errors up to Dashboard
         function bootSandboxIframe(htmlCode) {
-            const existingIframe = contentArea.querySelector('iframe');
-            if (existingIframe) existingIframe.remove();
-
+            cleanMainWorkspace();
             const iframe = document.createElement('iframe');
             iframe.className = 'app-workspace-iframe';
             
+            // NOTE THE ESCAPED \/script BELOW!
             const internalInterceptorScript = `
                 <script>
-                    window.onerror = function(msg, url, line) {
-                        window.parent.postMessage({source: 'flash-sandbox', type: 'error', text: msg + " (Line " + line + ")"}, '*');
-                        return false;
-                    };
+                    window.onerror = function(msg, url, line) { window.parent.postMessage({source: 'flash-sandbox', type: 'error', text: msg}, '*'); return false; };
                     ['log', 'warn', 'error'].forEach(type => {
                         const original = console[type];
-                        console[type] = function(...args) {
-                            window.parent.postMessage({source: 'flash-sandbox', type: type, text: args.join(' ')}, '*');
-                            original.apply(console, args);
-                        };
+                        console[type] = function(...args) { window.parent.postMessage({source: 'flash-sandbox', type: type, text: args.join(' ')}, '*'); original.apply(console, args); };
                     });
-                </script>
+                <\/script>
             `;
-
             iframe.srcdoc = internalInterceptorScript + htmlCode;
             contentArea.appendChild(iframe);
         }
 
-        iframeReloadTrigger.addEventListener('click', () => {
-            if (currentHTMLRaw) {
-                logToUiConsole("Performing standard hardware application reset...", "warn");
-                bootSandboxIframe(currentHTMLRaw);
-            }
-        });
-
-        // Spotify Engine Interface Rendering Matrix
+        // Spotify Engine Interface
         function renderSpotifyQueueUi() {
             trackQueueTarget.innerHTML = '';
             mediaQueue.forEach((track, idx) => {
                 const li = document.createElement('li');
                 li.className = `queue-item ${idx === currentTrackIndex ? 'playing' : ''}`;
                 li.onclick = () => playTrack(idx);
-                li.innerHTML = `
-                    <span class="track-index">${idx + 1}</span>
-                    <div class="track-details">
-                        <p class="track-title">${track.name}</p>
-                    </div>
-                `;
+                li.innerHTML = `<span class="track-index">${idx + 1}</span><p class="track-title">${track.name}</p>`;
                 trackQueueTarget.appendChild(li);
             });
         }
@@ -356,110 +310,57 @@
         function playTrack(idx) {
             if (idx < 0 || idx >= mediaQueue.length) return;
             currentTrackIndex = idx;
-            
-            cleanActiveInstances();
             renderSpotifyQueueUi();
 
             const track = mediaQueue[idx];
-            fileNameDisplay.textContent = track.name;
+            barTrackTitle.textContent = track.name;
+            barTrackStatus.textContent = "Playing Audio Stream";
 
-            const wrapper = document.createElement('div');
-            wrapper.className = 'plyr-audio-container';
-            wrapper.innerHTML = `<audio id="flash-plyr" controls src="${track.url}"></audio>`;
-            contentArea.appendChild(wrapper);
+            // Clean previous audio
+            if (plyrAudioInstance) { plyrAudioInstance.destroy(); plyrAudioInstance = null; }
+            audioPlayerMount.innerHTML = `<audio id="flash-plyr-audio" controls src="${track.url}"></audio>`;
 
-            plyrInstance = new Plyr('#flash-plyr', { controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume'] });
-            plyrInstance.play();
+            plyrAudioInstance = new Plyr('#flash-plyr-audio', { controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume'] });
+            plyrAudioInstance.play();
 
-            // Auto-advance loop when track completes execution
-            plyrInstance.on('ended', () => {
-                if (currentTrackIndex + 1 < mediaQueue.length) {
-                    playTrack(currentTrackIndex + 1);
-                }
+            plyrAudioInstance.on('ended', () => {
+                if (currentTrackIndex + 1 < mediaQueue.length) playTrack(currentTrackIndex + 1);
             });
         }
 
-        function launchWorkspace(name) {
-            fileNameDisplay.textContent = name;
-            uploadScreen.style.display = 'none';
-            viewerContainer.style.display = 'flex';
-        }
-
-        function cleanActiveInstances() {
-            // Retain Plymouth interface components wrapper states
-            const oldWrapper = contentArea.querySelector('.plyr-video-container, .plyr-audio-container, .premium-image-frame, iframe');
-            if (oldWrapper) oldWrapper.remove();
-            if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
+        function cleanMainWorkspace() {
+            contentArea.innerHTML = '';
+            if (plyrVideoInstance) { plyrVideoInstance.destroy(); plyrVideoInstance = null; }
         }
 
         closeBtn.addEventListener('click', () => {
-            cleanActiveInstances();
+            cleanMainWorkspace();
+            if (plyrAudioInstance) { plyrAudioInstance.destroy(); plyrAudioInstance = null; audioPlayerMount.innerHTML = ''; }
             mediaQueue.forEach(track => URL.revokeObjectURL(track.url));
             mediaQueue = []; currentTrackIndex = -1; currentHTMLRaw = "";
-            viewerContainer.style.display = 'none';
+            barTrackTitle.textContent = "Idle"; barTrackStatus.textContent = "No media selected";
+            renderSpotifyQueueUi();
             uploadScreen.style.display = 'flex';
             fileInput.value = '';
-            clearConsoleLog();
         });
 
-        // ADVANCED CLI OPERATIONAL ENGINE
+        // CLI Engine
         cliInputField.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 const inputVal = this.value.trim();
                 if (!inputVal) return;
-
-                printTerminalRow(inputVal, true);
-                processCommand(inputVal);
-                this.value = '';
+                const row = document.createElement('div'); row.textContent = `~ ${inputVal}`; terminalStreamTarget.appendChild(row);
+                
+                const cmd = inputVal.toLowerCase();
+                const out = document.createElement('div'); out.style.color = 'var(--accent)';
+                
+                if(cmd === 'clear') { terminalStreamTarget.innerHTML = ''; }
+                else if(cmd === 'reload') { if(currentHTMLRaw) bootSandboxIframe(currentHTMLRaw); else out.textContent = "No HTML loaded."; }
+                else { out.textContent = `Command executed: ${cmd}`; terminalStreamTarget.appendChild(out); }
+                
+                this.value = ''; terminalStreamTarget.scrollTop = terminalStreamTarget.scrollHeight;
             }
         });
-
-        function printTerminalRow(text, isInput = false) {
-            const row = document.createElement('div');
-            row.style.color = isInput ? '#fff' : '#10b981';
-            row.textContent = isInput ? `$ ${text}` : `> ${text}`;
-            terminalStreamTarget.appendChild(row);
-            terminalStreamTarget.scrollTop = terminalStreamTarget.scrollHeight;
-        }
-
-        function processCommand(cmdStr) {
-            const parts = cmdStr.split(' ');
-            const baseCmd = parts[0].toLowerCase();
-            const argument = parts.slice(1).join(' ');
-
-            switch(baseCmd) {
-                case 'help':
-                    printTerminalRow("Available CLI hooks: help, clear, reload, count, system, accent [color]");
-                    break;
-                case 'clear':
-                    terminalStreamTarget.innerHTML = '';
-                    break;
-                case 'reload':
-                    if (currentHTMLRaw) {
-                        bootSandboxIframe(currentHTMLRaw);
-                        printTerminalRow("App Frame pipeline reboot issued.");
-                    } else {
-                        printTerminalRow("No active HTML script environment compiled.", "ef4444");
-                    }
-                    break;
-                case 'count':
-                    printTerminalRow(`Track queue count register active: ${mediaQueue.length} files compiled.`);
-                    break;
-                case 'system':
-                    printTerminalRow(`Host: GitHub Pages | Kernel: DOM Sandbox v1.4 | Codec Engine: Plyr.io`);
-                    break;
-                case 'accent':
-                    if (argument) {
-                        document.documentElement.style.setProperty('--accent', argument);
-                        printTerminalRow(`System core theme color bound to: ${argument}`);
-                    } else {
-                        printTerminalRow("Parameter missing. Format: accent #ff0000");
-                    }
-                    break;
-                default:
-                    printTerminalRow(`Command lookup failure: '${baseCmd}'. Type 'help' for instructions.`);
-            }
-        }
     </script>
 </body>
 </html>
