@@ -6,6 +6,7 @@
     <title>Flash Filer | Premium</title>
     
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
         /* DESIGN SYSTEM & VARIABLES */
@@ -18,12 +19,12 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --glass-highlight: rgba(255, 255, 255, 0.03);
 
-            /* CUSTOM PLYR ENGINE OVERRIDES (Matches Flash Filer Brand) */
+            /* PLYR ENGINE BRAND OVERRIDES */
             --plyr-color-main: var(--accent);
             --plyr-video-background: transparent;
             --plyr-menu-background: rgba(15, 23, 42, 0.95);
             --plyr-menu-color: var(--text-main);
-            --plyr-audio-background: var(--glass-bg);
+            --plyr-audio-background: transparent;
             --plyr-audio-controls-color: var(--text-main);
         }
 
@@ -56,124 +57,165 @@
             100% { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; transform: translate(-20px, 20px) scale(0.95); }
         }
 
-        /* CORE PANELS & INTERFACES */
+        /* LAYER WRAPPERS */
         .interface-layer {
             position: relative; z-index: 2; width: 100%; height: 100%;
             display: flex; flex-direction: column;
         }
 
-        /* UPLOAD & INFO SCREEN */
+        /* HOME SCREEN & DASHBOARD */
         #upload-screen {
             flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column;
-            padding: 40px 20px; box-sizing: border-box; overflow-y: auto;
+            padding: 40px 20px; box-sizing: border-box; overflow-y: auto; transition: opacity 0.3s ease;
         }
 
-        .brand-header { text-align: center; margin-bottom: 24px; position: relative; }
+        .brand-header { text-align: center; margin-bottom: 40px; position: relative; }
         .brand-logo {
-            font-size: 2.75rem; font-weight: 700; letter-spacing: -0.04em; margin: 0;
+            font-size: 3rem; font-weight: 700; letter-spacing: -0.04em; margin: 0;
             background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .brand-tagline { 
-            color: var(--text-muted); font-size: 1rem; margin-top: 6px; font-weight: 400; 
+            color: var(--text-muted); font-size: 1rem; margin-top: 8px; font-weight: 400; 
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
 
-        /* INFO SYSTEM */
+        /* INTERACTIVE ICON HOME DOCK */
+        .home-dock {
+            display: flex; gap: 24px; align-items: center; justify-content: center;
+            background: var(--glass-bg); padding: 16px 24px; border-radius: 24px;
+            border: 1px solid var(--glass-border); backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .dock-item {
+            display: flex; align-items: center; gap: 0px; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border); padding: 14px; border-radius: 50%;
+            color: var(--text-main); cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 50px; height: 50px; box-sizing: border-box; overflow: hidden; white-space: nowrap;
+        }
+        .dock-item i { width: 22px; height: 22px; flex-shrink: 0; }
+        .dock-label {
+            opacity: 0; max-width: 0; font-size: 14px; font-weight: 600;
+            transition: opacity 0.25s step-end, max-width 0.35s ease, margin 0.3s ease;
+        }
+
+        /* HOVER MICRO-INTERACTIONS */
+        .dock-item:hover {
+            border-color: var(--accent); background: rgba(56, 189, 248, 0.08);
+            transform: scale(1.08) translateY(-4px); border-radius: 16px;
+            max-width: 220px; height: 50px; padding: 14px 20px; gap: 10px;
+            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.15);
+        }
+        .dock-item:hover .dock-label { opacity: 1; max-width: 150px; transition: opacity 0.25s step-start, max-width 0.35s ease; }
+
+        /* INFO ACCORDION SYSTEM */
         .info-toggle-btn {
             background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
-            color: var(--text-muted); width: 22px; height: 22px; border-radius: 50%;
-            font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease; font-weight: bold;
+            color: var(--text-muted); width: 24px; height: 24px; border-radius: 50%;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
         }
         .info-toggle-btn:hover, .info-toggle-btn.active {
             color: var(--accent); background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3);
-            transform: scale(1.05);
         }
+        .info-toggle-btn i { width: 14px; height: 14px; }
 
         .info-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
             max-width: 850px; width: 100%; opacity: 0; max-height: 0; overflow: hidden;
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 0;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 0;
         }
-        .info-grid.expanded {
-            opacity: 1; max-height: 800px; margin-bottom: 32px;
-        }
-
+        .info-grid.expanded { opacity: 1; max-height: 800px; margin-bottom: 32px; }
         .info-square {
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); border-radius: 16px; padding: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 0 1px 0 var(--glass-highlight);
-            box-sizing: border-box;
+            background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-        .info-square h3 {
-            margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--accent);
-            text-transform: uppercase; letter-spacing: 0.05em;
-        }
+        .info-square h3 { margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
         .info-square p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+        /* APPLE APP STORE OVERLAY */
+        #app-store-view {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(7, 10, 18, 0.92); backdrop-filter: blur(40px); z-index: 50;
+            padding: 40px; box-sizing: border-box; overflow-y: auto; flex-direction: column;
+        }
+        .store-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; }
+        .store-title h2 { font-size: 28px; margin: 0; font-weight: 700; }
+        .store-title p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px; }
+        .close-store-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 10px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .close-store-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
         
-        /* Image confinement rule */
-        .info-square img {
-            max-width: 100%; height: auto; max-height: 120px;
-            object-fit: cover; border-radius: 8px; margin-top: 12px; display: block;
-        }
+        /* App Store Card Deck Placeholders */
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .store-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; gap: 16px; align-items: center; transition: all 0.3s; }
+        .store-card:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); transform: translateY(-2px); }
+        .app-icon-mock { width: 64px; height: 64px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; }
+        .app-meta { flex: 1; }
+        .app-meta h4 { margin: 0; font-size: 16px; font-weight: 600; }
+        .app-meta p { margin: 4px 0 10px 0; font-size: 12px; color: var(--text-muted); }
+        .get-btn { background: #fff; color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+        .get-btn:hover { opacity: 0.9; }
 
-        /* BUTTONS */
-        .glass-btn {
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); color: var(--text-main);
-            padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 500; cursor: pointer;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 var(--glass-highlight);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .glass-btn:hover {
-            background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.15);
-        }
-        input[type="file"] { display: none; }
-
-        /* LOADING INDICATOR SYSTEM */
-        #buffer-loader {
-            display: none; color: var(--accent); font-weight: 500; font-size: 14px;
-            margin-top: 16px; letter-spacing: 0.05em; text-transform: uppercase;
-        }
-
-        /* VIEWER AREA */
+        /* ACTIVE INTERFACE CONTAINER */
         #viewer-container { display: none; width: 100%; height: 100%; position: relative; }
         #content-area { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 
-        /* PLYR WRAPPER CONFIGURATIONS */
-        .plyr-video-container {
-            width: 80%; max-height: 80%; border-radius: 20px; overflow: hidden;
-            border: 1px solid var(--glass-border); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7);
-        }
-        .plyr-audio-container {
-            width: 420px; padding: 12px; border-radius: 24px;
-            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--glass-border); box-shadow: 0 30px 60px rgba(0,0,0,0.4);
-        }
-
-        /* IMAGE OVERLAY PRESETS */
-        .premium-image-frame { max-width: 85%; max-height: 85%; padding: 12px; background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 var(--glass-highlight); }
+        /* VIEW DISPLAY HANDLING FOR MEDIAS */
+        .plyr-video-container { width: 80%; max-height: 80%; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass-border); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7); }
+        .premium-image-frame { max-width: 85%; max-height: 85%; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.6); }
         .premium-image { max-width: 100%; max-height: 100%; border-radius: 14px; display: block; }
         .app-workspace-iframe { width: 100%; height: 100%; border: none; background: #fff; }
 
-        /* FLOATING ACTION OVERLAY */
+        /* FLOATING HOVER ACTION OVERLAY OVERRIDE */
         #overlay-trigger { position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; z-index: 9; }
         #bottom-overlay {
             position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 15, 26, 0.6); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            padding: 12px 24px; border-radius: 20px; display: flex; align-items: center; gap: 16px;
-            transition: bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1); z-index: 9999; border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 var(--glass-highlight); margin-bottom: 20px;
+            background: rgba(10, 15, 26, 0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            padding: 12px 24px; border-radius: 20px; display: flex; align-items: center; gap: 12px;
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 9999; border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 24px;
         }
         #overlay-trigger:hover + #bottom-overlay, #bottom-overlay:hover { bottom: 0; }
-        .overlay-btn { background: rgba(255,255,255,0.04); color: var(--text-main); border: 1px solid var(--glass-border); padding: 8px 18px; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+        
+        .overlay-btn { background: rgba(255,255,255,0.04); color: var(--text-main); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
         .overlay-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .overlay-btn i { width: 14px; height: 14px; }
         .overlay-btn.exit { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
         .overlay-btn.exit:hover { background: #ef4444; color: #fff; }
-        #file-name { font-weight: 500; font-size: 14px; color: var(--text-main); opacity: 0.9; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; border-right: 1px solid rgba(255,255,255,0.1); }
+        
+        #file-name { font-weight: 500; font-size: 14px; color: var(--text-main); opacity: 0.9; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; gap: 8px; }
+        #file-name i { width: 16px; height: 16px; color: var(--accent); }
+
+        /* FLOATING SANDBOX LOG TERMINAL SYSTEM */
+        #sandbox-console-drawer {
+            display: none; position: absolute; left: 24px; bottom: 110px; width: 400px; height: 260px;
+            background: rgba(10, 15, 26, 0.95); backdrop-filter: blur(24px); border: 1px solid var(--glass-border);
+            border-radius: 16px; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); z-index: 10000;
+        }
+        .console-header { background: rgba(255,255,255,0.02); padding: 10px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
+        .console-logs { flex: 1; padding: 12px; overflow-y: auto; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+        .log-line { color: #38bdf8; word-break: break-all; }
+        .log-line.error { color: #f87171; }
+        .log-line.warn { color: #fbbf24; }
+
+        /* IMMERSIVE SPOTIFY PLAYER LOOK COMPONENT */
+        #spotify-player-layer {
+            display: none; flex-direction: column; width: 100%; height: 100%; background: radial-gradient(circle at bottom, #121824 0%, #06080c 100%); align-items: center; justify-content: center;
+        }
+        .spotify-card {
+            display: flex; flex-direction: column; align-items: center; width: 340px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 24px; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+        .album-art-placeholder {
+            width: 280px; height: 280px; background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px rgba(0,0,0,0.5); margin-bottom: 24px; color: var(--accent);
+        }
+        .album-art-placeholder i { width: 80px; height: 80px; }
+        .track-details { text-align: left; width: 100%; margin-bottom: 20px; padding: 0 4px; }
+        .track-details h3 { font-size: 20px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .track-details p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px; }
+        .spotify-controls-wrap { width: 100%; }
+
+        #buffer-loader { display: none; color: var(--accent); font-weight: 500; font-size: 13px; margin-top: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -189,49 +231,130 @@
             <div class="brand-header">
                 <h1 class="brand-logo">Flash Filer</h1>
                 <p class="brand-tagline">
-                    Professional Media & Application Runtime
-                    <button class="info-toggle-btn" id="info-btn" title="System Info">i</button>
+                    Premium Media & Secure Application Runtime
+                    <button class="info-toggle-btn" id="info-btn" title="Toggle Documentation">
+                        <i data-lucide="info"></i>
+                    </button>
                 </p>
             </div>
 
             <div class="info-grid" id="info-grid">
                 <div class="info-square">
-                    <h3>What it is?</h3>
-                    <p>Flash Filer is a sandboxed browser engine designed for local media and secure code execution. Basically a mini-browser in your browser that runs on your browser.</p>
+                    <h3>Isolated Runtime</h3>
+                    <p>Flash Filer mounts locally designated resources inside an explicit hardware-accelerated memory stack configuration safely.</p>
                 </div>
                 <div class="info-square">
-                    <h3>How it works?</h3>
-                    <p>Select 'Import Document' to open files. The engine generates structured object environments instantly. Now you can run any modern & compatible file you wish.</p>
+                    <h3>Unified Player</h3>
+                    <p>Integrated Plyr configuration architectures route media execution bypassing typical browser CSP structure controls dynamically.</p>
                 </div>
                 <div class="info-square">
-                    <h3>Privacy</h3>
-                    <p>100% Secure. Everything runs on YOUR device only, and only you have access to any of the files you wish to view.</p>
-                </div>
-                <div class="info-square">
-                    <h3>Navigation</h3>
-                    <p>When viewing a live asset, simply glide your cursor down to the lower boundary of the window to reveal controls.</p>
-                </div>
-                <div class="info-square">
-                    <h3>The Flash Project</h3>
-                    <p>Flash Filer is part of The Flash Project, a project to bring ultimate freedom to the internets users.</p>
+                    <h3>App Storage Stack</h3>
+                    <p>Connect repositories, local script environments, and custom application nodes instantly inside native view engines.</p>
                 </div>
             </div>
 
-            <label for="file-input" class="glass-btn">Import Document</label>
+            <div class="home-dock">
+                <div class="dock-item" onclick="triggerFileSelect()">
+                    <i data-lucide="file-plus"></i>
+                    <span class="dock-label">Import Document</span>
+                </div>
+                <div class="dock-item" id="store-trigger-btn">
+                    <i data-lucide="shopping-bag"></i>
+                    <span class="dock-label">App Store</span>
+                </div>
+                <div class="dock-item" onclick="launchAboutBlank()">
+                    <i data-lucide="external-link"></i>
+                    <span class="dock-label">Open about:blank</span>
+                </div>
+            </div>
+            
             <input type="file" id="file-input" accept="image/*,video/*,audio/*,.html">
-            <div id="buffer-loader">Decoding Stream Array...</div>
+            <div id="buffer-loader">Assembling Sandbox Buffer Track Array...</div>
+        </div>
+
+        <div id="app-store-view">
+            <div class="store-header">
+                <div class="store-title">
+                    <h2>Discover</h2>
+                    <p>Curated software arrays and tools for Flash Filer</p>
+                </div>
+                <button class="close-store-btn" id="close-store-btn">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="store-grid">
+                <div class="store-card">
+                    <div class="app-icon-mock"><i data-lucide="terminal"></i></div>
+                    <div class="app-meta">
+                        <h4>Terminal Pro</h4>
+                        <p>Advanced system bash shell client emulator.</p>
+                        <button class="get-btn">GET</button>
+                    </div>
+                </div>
+                <div class="store-card">
+                    <div class="app-icon-mock" style="background: linear-gradient(135deg, #10b981, #059669);"><i data-lucide="code-2"></i></div>
+                    <div class="app-meta">
+                        <h4>CodeEdit Live</h4>
+                        <p>Realtime HTML/JS compiler IDE text tool.</p>
+                        <button class="get-btn">GET</button>
+                    </div>
+                </div>
+                <div class="store-card">
+                    <div class="app-icon-mock" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="gamepad-2"></i></div>
+                    <div class="app-meta">
+                        <h4>Retro Arcade</h4>
+                        <p>Integrated WASM emulator node wrapper.</p>
+                        <button class="get-btn">GET</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="viewer-container">
-            <div id="content-area"></div>
             
+            <div id="content-area"></div>
+
+            <div id="spotify-player-layer">
+                <div class="spotify-card">
+                    <div class="album-art-placeholder">
+                        <i data-lucide="music-4"></i>
+                    </div>
+                    <div class="track-details">
+                        <h3 id="audio-track-title">Track Title</h3>
+                        <p>Local Audio Resource Node</p>
+                    </div>
+                    <div class="spotify-controls-wrap" id="audio-mount-point"></div>
+                </div>
+            </div>
+
+            <div id="sandbox-console-drawer">
+                <div class="console-header">
+                    <span>Diagnostic Log Receiver</span>
+                    <i data-lucide="terminal" style="width:14px;height:14px;"></i>
+                </div>
+                <div class="console-logs" id="console-logs-target">
+                    <div class="log-line">> Sandbox debug kernel established. Listening for thread entries...</div>
+                </div>
+            </div>
+
             <div id="overlay-trigger"></div>
             <div id="bottom-overlay">
-                <span id="file-name"></span>
-                <button class="overlay-btn exit" id="close-btn">Close Instance</button>
+                <span id="file-name"><i data-lucide="file-text"></i> Processing Instance</span>
+                
+                <button class="overlay-btn" id="html-refresh-btn" style="display: none;">
+                    <i data-lucide="refresh-cw"></i> Refresh App
+                </button>
+                <button class="overlay-btn" id="html-console-btn" style="display: none;">
+                    <i data-lucide="terminal"></i> Open Console
+                </button>
+                
+                <button class="overlay-btn exit" id="close-btn">
+                    <i data-lucide="log-out"></i> Close Instance
+                </button>
             </div>
-        </div>
 
+        </div>
     </div>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
@@ -242,32 +365,83 @@
             const uploadScreen = document.getElementById('upload-screen');
             const viewerContainer = document.getElementById('viewer-container');
             const contentArea = document.getElementById('content-area');
+            const spotifyPlayerLayer = document.getElementById('spotify-player-layer');
             const closeBtn = document.getElementById('close-btn');
             const fileNameDisplay = document.getElementById('file-name');
             const infoBtn = document.getElementById('info-btn');
             const infoGrid = document.getElementById('info-grid');
             const bufferLoader = document.getElementById('buffer-loader');
+            
+            const storeTriggerBtn = document.getElementById('store-trigger-btn');
+            const appStoreView = document.getElementById('app-store-view');
+            const closeStoreBtn = document.getElementById('close-store-btn');
+
+            // Dynamic Hover Bar Extensions
+            const htmlRefreshBtn = document.getElementById('html-refresh-btn');
+            const htmlConsoleBtn = document.getElementById('html-console-btn');
+            const sandboxConsoleDrawer = document.getElementById('sandbox-console-drawer');
+            const consoleLogsTarget = document.getElementById('console-logs-target');
+            const audioTrackTitle = document.getElementById('audio-track-title');
 
             let plyrInstance = null;
             let currentObjectUrl = null;
+            let activeHtmlPayload = "";
 
+            // Init Lucide Icons Engine
+            lucide.createIcons();
+
+            // Setup Navigation Listeners
             infoBtn.addEventListener('click', () => {
                 infoGrid.classList.toggle('expanded');
                 infoBtn.classList.toggle('active');
             });
 
+            storeTriggerBtn.addEventListener('click', () => { appStoreView.style.display = 'flex'; });
+            closeStoreBtn.addEventListener('click', () => { appStoreView.style.display = 'none'; });
+
+            // File Selection Target Routing
+            window.triggerFileSelect = function() { fileInput.click(); };
+
+            // Handle Cross-Environment Message Streams safely
+            window.addEventListener('message', function(e) {
+                if (e.data && e.data.source === 'flash-sandbox-logger') {
+                    pushConsoleLine(e.data.text, e.data.type);
+                }
+            });
+
+            function pushConsoleLine(text, type = 'log') {
+                const line = document.createElement('div');
+                line.className = `log-line ${type}`;
+                line.textContent = `> [${type.toUpperCase()}] ${text}`;
+                consoleLogsTarget.appendChild(line);
+                consoleLogsTarget.scrollTop = consoleLogsTarget.scrollHeight;
+            }
+
+            // About Blank Delivery Pipeline
+            window.launchAboutBlank = function() {
+                const cleanWin = window.open('about:blank', '_blank');
+                if (cleanWin) {
+                    const doc = cleanWin.document;
+                    doc.open();
+                    doc.write(document.documentElement.outerHTML);
+                    doc.close();
+                }
+            };
+
             fileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.innerHTML = `<i data-lucide="file-text"></i> ${file.name}`;
                 contentArea.innerHTML = ''; 
                 cleanActiveInstances();
+                lucide.createIcons();
 
                 const fileType = file.type;
 
-                // 1. IMAGE INTERFACE
+                // 1. IMAGES
                 if (fileType.startsWith('image/')) {
+                    toggleHtmlControls(false);
                     const frame = document.createElement('div');
                     frame.className = 'premium-image-frame';
                     const img = document.createElement('img');
@@ -276,104 +450,152 @@
                     img.className = 'premium-image';
                     frame.appendChild(img);
                     contentArea.appendChild(frame);
-                    launchWorkspace();
+                    launchWorkspaceView(false);
 
-                // 2. VIDEO ENTRYWAY (Bypasses CSP via Data URL Memory stream + Plyr)
+                // 2. VIDEOS
                 } else if (fileType.startsWith('video/')) {
+                    toggleHtmlControls(false);
                     bufferLoader.style.display = 'block';
                     const reader = new FileReader();
                     
                     reader.onload = function(evt) {
                         const wrapper = document.createElement('div');
                         wrapper.className = 'plyr-video-container';
-                        
                         const video = document.createElement('video');
                         video.id = 'flash-plyr';
                         video.setAttribute('playsinline', '');
                         video.setAttribute('controls', '');
-                        video.src = evt.target.result; // Pure data payload bypasses CSP
+                        video.src = evt.target.result;
                         
                         wrapper.appendChild(video);
                         contentArea.appendChild(wrapper);
                         
-                        // Boot the Plyr instance
                         plyrInstance = new Plyr('#flash-plyr', {
                             controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
                         });
                         
                         bufferLoader.style.display = 'none';
-                        launchWorkspace();
+                        launchWorkspaceView(false);
                     };
                     reader.readAsDataURL(file);
 
-                // 3. AUDIO MODULE (Bypasses CSP via Data URL Memory stream + Plyr)
+                // 3. AUDIOS (Immersive Spotify Player Configuration)
                 } else if (fileType.startsWith('audio/')) {
+                    toggleHtmlControls(false);
                     bufferLoader.style.display = 'block';
+                    audioTrackTitle.textContent = file.name;
                     const reader = new FileReader();
 
                     reader.onload = function(evt) {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'plyr-audio-container';
-                        
-                        const audio = document.createElement('audio');
-                        audio.id = 'flash-plyr';
-                        audio.setAttribute('controls', '');
-                        audio.src = evt.target.result;
-                        
-                        wrapper.appendChild(audio);
-                        contentArea.appendChild(wrapper);
+                        const mount = document.getElementById('audio-mount-point');
+                        mount.innerHTML = `<audio id="flash-plyr" controls src="${evt.target.result}"></audio>`;
                         
                         plyrInstance = new Plyr('#flash-plyr', {
                             controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
                         });
                         
                         bufferLoader.style.display = 'none';
-                        launchWorkspace();
+                        launchWorkspaceView(true); // true parameter sets up Spotify View state explicitly
+                        plyrInstance.play();
                     };
                     reader.readAsDataURL(file);
 
                 // 4. EMBEDDED APPLICATIONS (HTML)
                 } else if (fileType === 'text/html' || file.name.endsWith('.html')) {
+                    toggleHtmlControls(true);
                     const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const iframe = document.createElement('iframe');
-                        iframe.className = 'app-workspace-iframe';
-                        iframe.srcdoc = e.target.result; 
-                        contentArea.appendChild(iframe);
-                        launchWorkspace();
+                    reader.onload = function(evt) {
+                        activeHtmlPayload = evt.target.result;
+                        buildHTMLSandboxStack(activeHtmlPayload);
+                        launchWorkspaceView(false);
                     };
                     reader.readAsText(file);
 
-                // DOCUMENT FALLBACK MANAGEMENT
+                // GENERAL FORMAT HANDLING FALLBACK
                 } else {
+                    toggleHtmlControls(false);
                     const obj = document.createElement('object');
                     currentObjectUrl = URL.createObjectURL(file);
                     obj.data = currentObjectUrl;
                     obj.style.width = '100%'; obj.style.height = '100%';
                     contentArea.appendChild(obj);
-                    launchWorkspace();
+                    launchWorkspaceView(false);
                 }
             });
 
-            function launchWorkspace() {
+            function buildHTMLSandboxStack(htmlCode) {
+                contentArea.innerHTML = '';
+                const iframe = document.createElement('iframe');
+                iframe.className = 'app-workspace-iframe';
+                
+                // Safe browser token break ensures parsing runtime executes smoothly without interface crashes
+                const sOpen = '<sc' + 'ript>';
+                const sClose = '</sc' + 'ript>';
+
+                const interceptCode = sOpen + `
+                    window.onerror = function(msg, url, line) {
+                        window.parent.postMessage({source: 'flash-sandbox-logger', type: 'error', text: msg + ' (Line ' + line + ')'}, '*');
+                        return false;
+                    };
+                    ['log','warn','error'].forEach(type => {
+                        const original = console[type];
+                        console[type] = function(...args) {
+                            window.parent.postMessage({source: 'flash-sandbox-logger', type: type, text: args.join(' ')}, '*');
+                            original.apply(console, args);
+                        };
+                    });
+                ` + sClose;
+
+                iframe.srcdoc = interceptCode + htmlCode;
+                contentArea.appendChild(iframe);
+                pushConsoleLine("Application environment frame instance constructed successfully.");
+            }
+
+            function toggleHtmlControls(show) {
+                if (show) {
+                    htmlRefreshBtn.style.display = 'flex';
+                    htmlConsoleBtn.style.display = 'flex';
+                } else {
+                    htmlRefreshBtn.style.display = 'none';
+                    htmlConsoleBtn.style.display = 'none';
+                    sandboxConsoleDrawer.style.display = 'none';
+                }
+            }
+
+            htmlRefreshBtn.addEventListener('click', () => {
+                if (activeHtmlPayload) {
+                    pushConsoleLine("Instructing runtime hot reload command...", "warn");
+                    buildHTMLSandboxStack(activeHtmlPayload);
+                }
+            });
+
+            htmlConsoleBtn.addEventListener('click', () => {
+                sandboxConsoleDrawer.style.display = sandboxConsoleDrawer.style.display === 'flex' ? 'none' : 'flex';
+            });
+
+            function launchWorkspaceView(isAudio) {
                 uploadScreen.style.display = 'none';
                 viewerContainer.style.display = 'block';
+                if (isAudio) {
+                    contentArea.style.display = 'none';
+                    spotifyPlayerLayer.style.display = 'flex';
+                } else {
+                    contentArea.style.display = 'flex';
+                    spotifyPlayerLayer.style.display = 'none';
+                }
             }
 
             function cleanActiveInstances() {
-                if (plyrInstance) {
-                    plyrInstance.destroy();
-                    plyrInstance = null;
-                }
-                if (currentObjectUrl) {
-                    URL.revokeObjectURL(currentObjectUrl);
-                    currentObjectUrl = null;
-                }
+                if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
+                if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
+                activeHtmlPayload = "";
+                consoleLogsTarget.innerHTML = '<div class="log-line">> Sandbox debug kernel established. Listening for thread entries...</div>';
             }
 
             closeBtn.addEventListener('click', () => {
                 cleanActiveInstances();
                 contentArea.innerHTML = '';
+                toggleHtmlControls(false);
                 viewerContainer.style.display = 'none';
                 uploadScreen.style.display = 'flex';
                 fileInput.value = ''; 
