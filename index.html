@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Filer | Premium</title>
+    
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    
+    <style>
+        /* DESIGN SYSTEM & VARIABLES */
+        :root {
+            --bg-main: #0a0d14;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8; 
+            --glass-bg: rgba(15, 23, 42, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.03);
+
+            /* CUSTOM PLYR ENGINE OVERRIDES (Matches Flash Filer Brand) */
+            --plyr-color-main: var(--accent);
+            --plyr-video-background: transparent;
+            --plyr-menu-background: rgba(15, 23, 42, 0.95);
+            --plyr-menu-color: var(--text-main);
+            --plyr-audio-background: var(--glass-bg);
+            --plyr-audio-controls-color: var(--text-main);
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex; flex-direction: column; overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* LIQUID BACKGROUND BLOBS */
+        .ambient-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden; z-index: 1; pointer-events: none;
+        }
+        .liquid-blob {
+            position: absolute; width: 600px; height: 600px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%);
+            filter: blur(100px);
+            animation: morphLiquid 25s infinite alternate ease-in-out;
+        }
+        .blob-1 { top: -10%; left: -10%; }
+        .blob-2 { bottom: -10%; right: -10%; animation-delay: -7s; }
+        
+        @keyframes morphLiquid {
+            0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: translate(0, 0) scale(1); }
+            50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: translate(40px, -60px) scale(1.1); }
+            100% { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* CORE PANELS & INTERFACES */
+        .interface-layer {
+            position: relative; z-index: 2; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+        }
+
+        /* UPLOAD & INFO SCREEN */
+        #upload-screen {
+            flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column;
+            padding: 40px 20px; box-sizing: border-box; overflow-y: auto;
+        }
+
+        .brand-header { text-align: center; margin-bottom: 24px; position: relative; }
+        .brand-logo {
+            font-size: 2.75rem; font-weight: 700; letter-spacing: -0.04em; margin: 0;
+            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .brand-tagline { 
+            color: var(--text-muted); font-size: 1rem; margin-top: 6px; font-weight: 400; 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        /* INFO SYSTEM */
+        .info-toggle-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
+            color: var(--text-muted); width: 22px; height: 22px; border-radius: 50%;
+            font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; font-weight: bold;
+        }
+        .info-toggle-btn:hover, .info-toggle-btn.active {
+            color: var(--accent); background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3);
+            transform: scale(1.05);
+        }
+
+        .info-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+            max-width: 850px; width: 100%; opacity: 0; max-height: 0; overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 0;
+        }
+        .info-grid.expanded {
+            opacity: 1; max-height: 800px; margin-bottom: 32px;
+        }
+
+        .info-square {
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 16px; padding: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 0 1px 0 var(--glass-highlight);
+            box-sizing: border-box;
+        }
+        .info-square h3 {
+            margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .info-square p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        
+        /* Image confinement rule */
+        .info-square img {
+            max-width: 100%; height: auto; max-height: 120px;
+            object-fit: cover; border-radius: 8px; margin-top: 12px; display: block;
+        }
+
+        /* BUTTONS */
+        .glass-btn {
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 14px 32px; border-radius: 14px; font-size: 15px; font-weight: 500; cursor: pointer;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 var(--glass-highlight);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+        input[type="file"] { display: none; }
+
+        /* LOADING INDICATOR SYSTEM */
+        #buffer-loader {
+            display: none; color: var(--accent); font-weight: 500; font-size: 14px;
+            margin-top: 16px; letter-spacing: 0.05em; text-transform: uppercase;
+        }
+
+        /* VIEWER AREA */
+        #viewer-container { display: none; width: 100%; height: 100%; position: relative; }
+        #content-area { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+
+        /* PLYR WRAPPER CONFIGURATIONS */
+        .plyr-video-container {
+            width: 80%; max-height: 80%; border-radius: 20px; overflow: hidden;
+            border: 1px solid var(--glass-border); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7);
+        }
+        .plyr-audio-container {
+            width: 420px; padding: 12px; border-radius: 24px;
+            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--glass-border); box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        /* IMAGE OVERLAY PRESETS */
+        .premium-image-frame { max-width: 85%; max-height: 85%; padding: 12px; background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 var(--glass-highlight); }
+        .premium-image { max-width: 100%; max-height: 100%; border-radius: 14px; display: block; }
+        .app-workspace-iframe { width: 100%; height: 100%; border: none; background: #fff; }
+
+        /* FLOATING ACTION OVERLAY */
+        #overlay-trigger { position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; z-index: 9; }
+        #bottom-overlay {
+            position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(10, 15, 26, 0.6); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            padding: 12px 24px; border-radius: 20px; display: flex; align-items: center; gap: 16px;
+            transition: bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1); z-index: 9999; border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 var(--glass-highlight); margin-bottom: 20px;
+        }
+        #overlay-trigger:hover + #bottom-overlay, #bottom-overlay:hover { bottom: 0; }
+        .overlay-btn { background: rgba(255,255,255,0.04); color: var(--text-main); border: 1px solid var(--glass-border); padding: 8px 18px; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s; }
+        .overlay-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .overlay-btn.exit { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .overlay-btn.exit:hover { background: #ef4444; color: #fff; }
+        #file-name { font-weight: 500; font-size: 14px; color: var(--text-main); opacity: 0.9; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; border-right: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-bg">
+        <div class="liquid-blob blob-1"></div>
+        <div class="liquid-blob blob-2"></div>
+    </div>
+
+    <div class="interface-layer">
+        
+        <div id="upload-screen">
+            <div class="brand-header">
+                <h1 class="brand-logo">Flash Filer</h1>
+                <p class="brand-tagline">
+                    Professional Media & Application Runtime
+                    <button class="info-toggle-btn" id="info-btn" title="System Info">i</button>
+                </p>
+            </div>
+
+            <div class="info-grid" id="info-grid">
+                <div class="info-square">
+                    <h3>What it is?</h3>
+                    <p>Flash Filer is a sandboxed browser engine designed for local media and secure code execution. Basically a mini-browser in your browser that runs on your browser.</p>
+                </div>
+                <div class="info-square">
+                    <h3>How it works?</h3>
+                    <p>Select 'Import Document' to open files. The engine generates structured object environments instantly. Now you can run any modern & compatible file you wish.</p>
+                </div>
+                <div class="info-square">
+                    <h3>Privacy</h3>
+                    <p>100% Secure. Everything runs on YOUR device only, and only you have access to any of the files you wish to view.</p>
+                </div>
+                <div class="info-square">
+                    <h3>Navigation</h3>
+                    <p>When viewing a live asset, simply glide your cursor down to the lower boundary of the window to reveal controls.</p>
+                </div>
+                <div class="info-square">
+                    <h3>The Flash Project</h3>
+                    <p>Flash Filer is part of The Flash Project, a project to bring ultimate freedom to the internets users.</p>
+                </div>
+            </div>
+
+            <label for="file-input" class="glass-btn">Import Document</label>
+            <input type="file" id="file-input" accept="image/*,video/*,audio/*,.html">
+            <div id="buffer-loader">Decoding Stream Array...</div>
+        </div>
+
+        <div id="viewer-container">
+            <div id="content-area"></div>
+            
+            <div id="overlay-trigger"></div>
+            <div id="bottom-overlay">
+                <span id="file-name"></span>
+                <button class="overlay-btn exit" id="close-btn">Close Instance</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+
+    <script>
+        {
+            const fileInput = document.getElementById('file-input');
+            const uploadScreen = document.getElementById('upload-screen');
+            const viewerContainer = document.getElementById('viewer-container');
+            const contentArea = document.getElementById('content-area');
+            const closeBtn = document.getElementById('close-btn');
+            const fileNameDisplay = document.getElementById('file-name');
+            const infoBtn = document.getElementById('info-btn');
+            const infoGrid = document.getElementById('info-grid');
+            const bufferLoader = document.getElementById('buffer-loader');
+
+            let plyrInstance = null;
+            let currentObjectUrl = null;
+
+            infoBtn.addEventListener('click', () => {
+                infoGrid.classList.toggle('expanded');
+                infoBtn.classList.toggle('active');
+            });
+
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                fileNameDisplay.textContent = file.name;
+                contentArea.innerHTML = ''; 
+                cleanActiveInstances();
+
+                const fileType = file.type;
+
+                // 1. IMAGE INTERFACE
+                if (fileType.startsWith('image/')) {
+                    const frame = document.createElement('div');
+                    frame.className = 'premium-image-frame';
+                    const img = document.createElement('img');
+                    currentObjectUrl = URL.createObjectURL(file);
+                    img.src = currentObjectUrl;
+                    img.className = 'premium-image';
+                    frame.appendChild(img);
+                    contentArea.appendChild(frame);
+                    launchWorkspace();
+
+                // 2. VIDEO ENTRYWAY (Bypasses CSP via Data URL Memory stream + Plyr)
+                } else if (fileType.startsWith('video/')) {
+                    bufferLoader.style.display = 'block';
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(evt) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'plyr-video-container';
+                        
+                        const video = document.createElement('video');
+                        video.id = 'flash-plyr';
+                        video.setAttribute('playsinline', '');
+                        video.setAttribute('controls', '');
+                        video.src = evt.target.result; // Pure data payload bypasses CSP
+                        
+                        wrapper.appendChild(video);
+                        contentArea.appendChild(wrapper);
+                        
+                        // Boot the Plyr instance
+                        plyrInstance = new Plyr('#flash-plyr', {
+                            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
+                        });
+                        
+                        bufferLoader.style.display = 'none';
+                        launchWorkspace();
+                    };
+                    reader.readAsDataURL(file);
+
+                // 3. AUDIO MODULE (Bypasses CSP via Data URL Memory stream + Plyr)
+                } else if (fileType.startsWith('audio/')) {
+                    bufferLoader.style.display = 'block';
+                    const reader = new FileReader();
+
+                    reader.onload = function(evt) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'plyr-audio-container';
+                        
+                        const audio = document.createElement('audio');
+                        audio.id = 'flash-plyr';
+                        audio.setAttribute('controls', '');
+                        audio.src = evt.target.result;
+                        
+                        wrapper.appendChild(audio);
+                        contentArea.appendChild(wrapper);
+                        
+                        plyrInstance = new Plyr('#flash-plyr', {
+                            controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
+                        });
+                        
+                        bufferLoader.style.display = 'none';
+                        launchWorkspace();
+                    };
+                    reader.readAsDataURL(file);
+
+                // 4. EMBEDDED APPLICATIONS (HTML)
+                } else if (fileType === 'text/html' || file.name.endsWith('.html')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const iframe = document.createElement('iframe');
+                        iframe.className = 'app-workspace-iframe';
+                        iframe.srcdoc = e.target.result; 
+                        contentArea.appendChild(iframe);
+                        launchWorkspace();
+                    };
+                    reader.readAsText(file);
+
+                // DOCUMENT FALLBACK MANAGEMENT
+                } else {
+                    const obj = document.createElement('object');
+                    currentObjectUrl = URL.createObjectURL(file);
+                    obj.data = currentObjectUrl;
+                    obj.style.width = '100%'; obj.style.height = '100%';
+                    contentArea.appendChild(obj);
+                    launchWorkspace();
+                }
+            });
+
+            function launchWorkspace() {
+                uploadScreen.style.display = 'none';
+                viewerContainer.style.display = 'block';
+            }
+
+            function cleanActiveInstances() {
+                if (plyrInstance) {
+                    plyrInstance.destroy();
+                    plyrInstance = null;
+                }
+                if (currentObjectUrl) {
+                    URL.revokeObjectURL(currentObjectUrl);
+                    currentObjectUrl = null;
+                }
+            }
+
+            closeBtn.addEventListener('click', () => {
+                cleanActiveInstances();
+                contentArea.innerHTML = '';
+                viewerContainer.style.display = 'none';
+                uploadScreen.style.display = 'flex';
+                fileInput.value = ''; 
+            });
+        }
+    </script>
+</body>
+</html>
