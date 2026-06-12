@@ -2,220 +2,326 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flash Filer | Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flash Filer</title>
     
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
-        /* DESIGN SYSTEM & VARIABLES */
+        /* --- DESIGN SYSTEM & VARIABLES --- */
         :root {
-            --bg-main: #0a0d14;
+            --bg-main: #04060a;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent: #38bdf8; 
-            --glass-bg: rgba(15, 23, 42, 0.45);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --spotify-green: #1db954;
+            --spotify-green-hover: #1ed760;
+            
+            --glass-bg: rgba(15, 23, 42, 0.4);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.03);
+            --glass-hover: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+            --terminal-bg: #070a12;
 
-            /* PLYR ENGINE BRAND OVERRIDES */
             --plyr-color-main: var(--accent);
             --plyr-video-background: transparent;
-            --plyr-menu-background: rgba(15, 23, 42, 0.95);
+            --plyr-menu-background: rgba(15, 23, 42, 0.9);
             --plyr-menu-color: var(--text-main);
-            --plyr-audio-background: transparent;
             --plyr-audio-controls-color: var(--text-main);
         }
 
+        * { box-sizing: border-box; }
         body, html {
-            margin: 0; padding: 0; height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
-            display: flex; flex-direction: column; overflow: hidden;
-            letter-spacing: -0.01em;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* LIQUID BACKGROUND BLOBS */
+        /* --- AMBIENT LIQUID BACKGROUND --- */
         .ambient-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            overflow: hidden; z-index: 1; pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 0; pointer-events: none; overflow: hidden;
+            background: radial-gradient(circle at 50% 50%, #070b12 0%, #000000 100%);
         }
         .liquid-blob {
-            position: absolute; width: 600px; height: 600px;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%);
-            filter: blur(100px);
-            animation: morphLiquid 25s infinite alternate ease-in-out;
+            position: absolute; border-radius: 50%; filter: blur(130px);
+            opacity: 0.55; mix-blend-mode: screen;
+            animation: floatBlob 22s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .blob-1 { top: -10%; left: -10%; }
-        .blob-2 { bottom: -10%; right: -10%; animation-delay: -7s; }
+        .blob-1 { width: 45vw; height: 45vw; background: rgba(56, 189, 248, 0.13); top: -10%; left: -10%; }
+        .blob-2 { width: 55vw; height: 55vw; background: rgba(99, 102, 241, 0.1); bottom: -20%; right: -10%; animation-delay: -5s; }
         
-        @keyframes morphLiquid {
-            0% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; transform: translate(0, 0) scale(1); }
-            50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; transform: translate(40px, -60px) scale(1.1); }
-            100% { border-radius: 50% 50% 34% 66% / 56% 68% 32% 44%; transform: translate(-20px, 20px) scale(0.95); }
+        @keyframes floatBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(8%, 12%) scale(1.08); }
+            100% { transform: translate(-4%, -8%) scale(0.92); }
         }
 
-        /* LAYER WRAPPERS */
-        .interface-layer {
-            position: relative; z-index: 2; width: 100%; height: 100%;
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .app-container {
+            position: relative; z-index: 10; width: 100%; height: 100%;
             display: flex; flex-direction: column;
         }
 
-        /* HOME SCREEN & DASHBOARD */
-        #upload-screen {
-            flex: 1; display: flex; justify-content: center; align-items: center; flex-direction: column;
-            padding: 40px 20px; box-sizing: border-box; overflow-y: auto; transition: opacity 0.3s ease;
+        /* --- DASHBOARD VIEW --- */
+        #dashboard-view {
+            flex: 1; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; padding: 2rem;
+            transition: opacity 0.4s ease;
         }
 
-        .brand-header { text-align: center; margin-bottom: 40px; position: relative; }
-        .brand-logo {
-            font-size: 3rem; font-weight: 700; letter-spacing: -0.04em; margin: 0;
-            background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+        .hero-header { text-align: center; margin-bottom: 3rem; }
+        .hero-logo {
+            font-size: 3.8rem; font-weight: 800; letter-spacing: -0.06em; margin: 0;
+            background: linear-gradient(135deg, #ffffff 30%, #64748b 100%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(255,255,255,0.05);
         }
-        .brand-tagline { 
-            color: var(--text-muted); font-size: 1rem; margin-top: 8px; font-weight: 400; 
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-
-        /* INTERACTIVE ICON HOME DOCK */
-        .home-dock {
-            display: flex; gap: 24px; align-items: center; justify-content: center;
-            background: var(--glass-bg); padding: 16px 24px; border-radius: 24px;
-            border: 1px solid var(--glass-border); backdrop-filter: blur(20px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        .hero-tagline {
+            color: var(--text-muted); font-size: 1.1rem; margin-top: 0.5rem;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
         }
 
-        .dock-item {
-            display: flex; align-items: center; gap: 0px; background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border); padding: 14px; border-radius: 50%;
-            color: var(--text-main); cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            max-width: 50px; height: 50px; box-sizing: border-box; overflow: hidden; white-space: nowrap;
-        }
-        .dock-item i { width: 22px; height: 22px; flex-shrink: 0; }
-        .dock-label {
-            opacity: 0; max-width: 0; font-size: 14px; font-weight: 600;
-            transition: opacity 0.25s step-end, max-width 0.35s ease, margin 0.3s ease;
-        }
-
-        /* HOVER MICRO-INTERACTIONS */
-        .dock-item:hover {
-            border-color: var(--accent); background: rgba(56, 189, 248, 0.08);
-            transform: scale(1.08) translateY(-4px); border-radius: 16px;
-            max-width: 220px; height: 50px; padding: 14px 20px; gap: 10px;
-            box-shadow: 0 10px 25px rgba(56, 189, 248, 0.15);
-        }
-        .dock-item:hover .dock-label { opacity: 1; max-width: 150px; transition: opacity 0.25s step-start, max-width 0.35s ease; }
-
-        /* INFO ACCORDION SYSTEM */
-        .info-toggle-btn {
-            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border);
-            color: var(--text-muted); width: 24px; height: 24px; border-radius: 50%;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        .info-btn {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            color: var(--text-muted); width: 28px; height: 28px; border-radius: 50%;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.2s ease;
         }
-        .info-toggle-btn:hover, .info-toggle-btn.active {
-            color: var(--accent); background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3);
-        }
-        .info-toggle-btn i { width: 14px; height: 14px; }
+        .info-btn:hover, .info-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
 
         .info-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
-            max-width: 850px; width: 100%; opacity: 0; max-height: 0; overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 0;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+            max-width: 900px; width: 100%; margin-bottom: 0;
+            opacity: 0; max-height: 0; overflow: hidden; transform: translateY(-10px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .info-grid.expanded { opacity: 1; max-height: 800px; margin-bottom: 32px; }
-        .info-square {
-            background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
-            border-radius: 16px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        .info-grid.active { opacity: 1; max-height: 300px; margin-bottom: 3rem; transform: translateY(0); }
+        .info-card {
+            background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); border-radius: 1.2rem; padding: 1.5rem;
         }
-        .info-square h3 { margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
-        .info-square p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+        .info-card h3 { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 0.5rem 0; }
+        .info-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0; }
 
-        /* APPLE APP STORE OVERLAY */
-        #app-store-view {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(7, 10, 18, 0.92); backdrop-filter: blur(40px); z-index: 50;
-            padding: 40px; box-sizing: border-box; overflow-y: auto; flex-direction: column;
+        /* MacOS Style Dock */
+        .dock-container {
+            display: flex; gap: 1rem; padding: 1rem; border-radius: 2rem;
+            background: rgba(10, 15, 30, 0.4); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
         }
-        .store-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 30px; }
-        .store-title h2 { font-size: 28px; margin: 0; font-weight: 700; }
-        .store-title p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px; }
-        .close-store-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff; padding: 10px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .close-store-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        .dock-item {
+            display: flex; align-items: center; justify-content: center;
+            width: 3.5rem; height: 3.5rem; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border);
+            color: var(--text-main); cursor: pointer; position: relative;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .dock-item i { width: 1.5rem; height: 1.5rem; }
+        .dock-item:hover {
+            transform: translateY(-8px) scale(1.15);
+            background: var(--glass-hover); border-color: var(--accent);
+            color: var(--accent); box-shadow: 0 10px 20px var(--accent-glow);
+        }
+        .dock-tooltip {
+            position: absolute; top: -2.5rem; background: rgba(0,0,0,0.85);
+            color: #fff; font-size: 0.8rem; padding: 0.4rem 0.8rem; border-radius: 0.5rem;
+            pointer-events: none; opacity: 0; transform: translateY(10px);
+            transition: all 0.2s ease; white-space: nowrap; font-weight: 500;
+        }
+        .dock-item:hover .dock-tooltip { opacity: 1; transform: translateY(0); }
+
+        /* --- GLOBAL OVERLAYS --- */
+        .panel-overlay {
+            position: fixed; inset: 0; background: rgba(4, 6, 10, 0.9);
+            backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
+            z-index: 100; display: flex; flex-direction: column; padding: 3rem;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .panel-overlay.active { opacity: 1; pointer-events: all; }
         
-        /* App Store Card Deck Placeholders */
-        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
-        .store-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px; display: flex; gap: 16px; align-items: center; transition: all 0.3s; }
-        .store-card:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); transform: translateY(-2px); }
-        .app-icon-mock { width: 64px; height: 64px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; }
-        .app-meta { flex: 1; }
-        .app-meta h4 { margin: 0; font-size: 16px; font-weight: 600; }
-        .app-meta p { margin: 4px 0 10px 0; font-size: 12px; color: var(--text-muted); }
-        .get-btn { background: #fff; color: #000; border: none; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
-        .get-btn:hover { opacity: 0.9; }
-
-        /* ACTIVE INTERFACE CONTAINER */
-        #viewer-container { display: none; width: 100%; height: 100%; position: relative; }
-        #content-area { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-
-        /* VIEW DISPLAY HANDLING FOR MEDIAS */
-        .plyr-video-container { width: 80%; max-height: 80%; border-radius: 20px; overflow: hidden; border: 1px solid var(--glass-border); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.7); }
-        .premium-image-frame { max-width: 85%; max-height: 85%; padding: 12px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 30px 70px rgba(0,0,0,0.6); }
-        .premium-image { max-width: 100%; max-height: 100%; border-radius: 14px; display: block; }
-        .app-workspace-iframe { width: 100%; height: 100%; border: none; background: #fff; }
-
-        /* FLOATING HOVER ACTION OVERLAY OVERRIDE */
-        #overlay-trigger { position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; z-index: 9; }
-        #bottom-overlay {
-            position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
-            background: rgba(10, 15, 26, 0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            padding: 12px 24px; border-radius: 20px; display: flex; align-items: center; gap: 12px;
-            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 9999; border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 24px;
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--glass-border); padding-bottom: 1.5rem; margin-bottom: 2.5rem;
         }
-        #overlay-trigger:hover + #bottom-overlay, #bottom-overlay:hover { bottom: 0; }
+        .panel-header h2 { font-size: 2.3rem; margin: 0; font-weight: 700; background: linear-gradient(90deg, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .overlay-btn { background: rgba(255,255,255,0.04); color: var(--text-main); border: 1px solid var(--glass-border); padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-        .overlay-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
-        .overlay-btn i { width: 14px; height: 14px; }
-        .overlay-btn.exit { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .overlay-btn.exit:hover { background: #ef4444; color: #fff; }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+        .btn-close {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); color: #fff;
+            width: 2.5rem; height: 2.5rem; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s ease;
+        }
+        .btn-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: #ef4444; transform: rotate(90deg); }
+
+        /* Store Grid Layout */
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; overflow-y: auto; padding-bottom: 2rem; }
+        .store-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 1.5rem;
+            padding: 1.5rem; display: flex; gap: 1rem; align-items: center; transition: all 0.3s ease;
+        }
+        .store-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.06); }
+        .app-icon {
+            width: 4rem; height: 4rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; color: white;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .app-info { flex: 1; }
+        .app-info h4 { margin: 0 0 0.2rem 0; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+        .app-info p { margin: 0; font-size: 0.8rem; color: var(--text-muted); }
+        .btn-get { background: #fff; color: #000; border: none; padding: 0.4rem 1.2rem; border-radius: 2rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+        .btn-get:hover { opacity: 0.8; }
+
+        /* --- FLASH IDE COMPILER WORKSPACE --- */
+        .token-input {
+            background: rgba(0, 0, 0, 0.4); border: 1px solid var(--glass-border);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 0.75rem; width: 220px;
+            font-size: 0.85rem; outline: none; transition: all 0.2s;
+        }
+        .token-input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
         
-        #file-name { font-weight: 500; font-size: 14px; color: var(--text-main); opacity: 0.9; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.15); display: flex; align-items: center; gap: 8px; }
-        #file-name i { width: 16px; height: 16px; color: var(--accent); }
-
-        /* FLOATING SANDBOX LOG TERMINAL SYSTEM */
-        #sandbox-console-drawer {
-            display: none; position: absolute; left: 24px; bottom: 110px; width: 400px; height: 260px;
-            background: rgba(10, 15, 26, 0.95); backdrop-filter: blur(24px); border: 1px solid var(--glass-border);
-            border-radius: 16px; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); z-index: 10000;
+        .lang-selector {
+            background: rgba(15, 23, 42, 0.6); border: 1px solid var(--glass-border);
+            color: #fff; padding: 0.5rem 1rem; border-radius: 0.75rem;
+            font-weight: 500; cursor: pointer; outline: none; transition: border 0.2s;
         }
-        .console-header { background: rgba(255,255,255,0.02); padding: 10px 16px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; }
-        .console-logs { flex: 1; padding: 12px; overflow-y: auto; font-family: monospace; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .log-line { color: #38bdf8; word-break: break-all; }
-        .log-line.error { color: #f87171; }
-        .log-line.warn { color: #fbbf24; }
+        .lang-selector:focus { border-color: var(--accent); }
 
-        /* IMMERSIVE SPOTIFY PLAYER LOOK COMPONENT */
-        #spotify-player-layer {
-            display: none; flex-direction: column; width: 100%; height: 100%; background: radial-gradient(circle at bottom, #121824 0%, #06080c 100%); align-items: center; justify-content: center;
+        .btn-run {
+            background: var(--accent); color: #06080d; border: none;
+            padding: 0.5rem 1.25rem; border-radius: 0.75rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.4rem; cursor: pointer;
+            transition: all 0.2s ease; box-shadow: 0 4px 12px var(--accent-glow);
         }
+        .btn-run:hover { transform: translateY(-1px); opacity: 0.95; box-shadow: 0 6px 16px var(--accent-glow); }
+
+        .ide-workspace {
+            flex: 1; display: grid; grid-template-columns: 1fr 1fr;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+            border-radius: 1.5rem; overflow: hidden;
+        }
+        .editor-section { display: flex; flex-direction: column; border-right: 1px solid var(--glass-border); background: rgba(5,7,12,0.25); }
+        .code-textarea {
+            flex: 1; width: 100%; height: 100%; background: transparent; border: none; resize: none;
+            color: #e2e8f0; font-family: "JetBrains Mono", "Fira Code", monospace; font-size: 0.95rem;
+            padding: 1.5rem; line-height: 1.5; outline: none; tab-size: 4;
+        }
+        .terminal-section { display: flex; flex-direction: column; background: var(--terminal-bg); }
+        .terminal-header {
+            padding: 0.6rem 1.2rem; background: rgba(255,255,255,0.02);
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .terminal-output {
+            flex: 1; padding: 1.5rem; font-family: "JetBrains Mono", monospace;
+            font-size: 0.9rem; overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+            color: #cbd5e1; line-height: 1.6;
+        }
+        .output-system { color: var(--accent); }
+        .output-error { color: #f87171; }
+        .output-warn { color: #fbbf24; }
+
+        /* --- RUNTIME VIEWER TARGET ENVIRONMENT --- */
+        #viewer-environment { display: none; width: 100%; height: 100%; position: relative; }
+        .render-target { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+
+        .image-frame { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 1rem; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border: 1px solid var(--glass-border); }
+        .video-wrapper { width: 85%; max-width: 1200px; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.6); border: 1px solid var(--glass-border); background: #000; }
+        .iframe-sandbox { width: 100%; height: 100%; border: none; background: #04060a; border-radius: 1rem; overflow: hidden; }
+
+        /* --- MULTI-TRACK SPOTIFY-STYLE PLAYLIST ECOSYSTEM --- */
+        .audio-workspace-container { display: flex; gap: 1.5rem; align-items: flex-start; max-width: 750px; width: 100%; }
         .spotify-card {
-            display: flex; flex-direction: column; align-items: center; width: 340px; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 24px; border-radius: 28px; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            background: #0f111a; border-radius: 1.2rem; padding: 1.5rem; width: 340px;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.06);
+            display: flex; flex-direction: column; gap: 1.25rem; transition: transform 0.3s ease;
         }
-        .album-art-placeholder {
-            width: 280px; height: 280px; background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 16px 32px rgba(0,0,0,0.5); margin-bottom: 24px; color: var(--accent);
+        .spot-art {
+            width: 100%; aspect-ratio: 1; border-radius: 0.75rem;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6); position: relative; overflow: hidden;
         }
-        .album-art-placeholder i { width: 80px; height: 80px; }
-        .track-details { text-align: left; width: 100%; margin-bottom: 20px; padding: 0 4px; }
-        .track-details h3 { font-size: 20px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .track-details p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px; }
-        .spotify-controls-wrap { width: 100%; }
+        .spot-art i { width: 64px; height: 64px; color: var(--spotify-green); z-index: 5; }
+        .spot-info { display: flex; justify-content: space-between; align-items: center; }
+        .spot-meta { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; padding-right: 1rem; }
+        .spot-title { font-size: 1.15rem; font-weight: 700; margin: 0; color: #fff; overflow: hidden; text-overflow: ellipsis; }
+        .spot-artist { font-size: 0.85rem; color: #b3b3b3; margin: 0.25rem 0 0 0; }
+        
+        .spot-btn { background: none; border: none; color: #b3b3b3; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; padding: 0; }
+        .spot-btn:hover { color: #fff; }
+        .spot-btn.active { color: var(--spotify-green); }
 
-        #buffer-loader { display: none; color: var(--accent); font-weight: 500; font-size: 13px; margin-top: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
+        .spot-progress-container { display: flex; flex-direction: column; gap: 0.5rem; }
+        .spot-slider-wrapper { position: relative; width: 100%; height: 4px; background: #334155; border-radius: 2px; cursor: pointer; }
+        .spot-progress-bar { width: 0%; height: 100%; background: var(--spotify-green); border-radius: 2px; position: relative; }
+        .spot-slider-wrapper:hover .spot-progress-bar { background: var(--spotify-green-hover); }
+        
+        .spot-time { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+        .spot-controls { display: flex; justify-content: center; align-items: center; gap: 1.25rem; margin-top: 0.25rem; }
+        .spot-btn.play-pause { background: #fff; color: #000; width: 44px; height: 44px; border-radius: 50%; }
+        .spot-btn.play-pause:hover { transform: scale(1.05); background: #f8fafc; }
+
+        /* Dynamic Playlist Track Panel */
+        .playlist-panel {
+            background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 1.2rem;
+            width: 340px; height: 410px; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .playlist-header { padding: 1rem; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: flex; justify-content: space-between; }
+        .playlist-items { flex: 1; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
+        .playlist-track {
+            display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0.8rem; border-radius: 0.5rem;
+            cursor: pointer; transition: all 0.2s; font-size: 0.9rem; color: #cbd5e1;
+        }
+        .playlist-track:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        .playlist-track.active { background: rgba(56, 189, 248, 0.15); color: var(--accent); font-weight: 600; }
+        .playlist-track-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* --- FLOATING INFRASTRUCTURE CONTROLS --- */
+        .hover-trigger-zone { position: absolute; bottom: 0; left: 0; width: 100%; height: 80px; z-index: 40; }
+        .floating-action-bar {
+            position: absolute; bottom: -100px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            padding: 0.8rem 1.5rem; border-radius: 2rem; display: flex; align-items: center; gap: 1rem;
+            border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+            transition: bottom 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 50;
+        }
+        .hover-trigger-zone:hover + .floating-action-bar, .floating-action-bar:hover { bottom: 2rem; }
+
+        .file-badge {
+            display: flex; align-items: center; gap: 0.5rem; padding-right: 1rem;
+            border-right: 1px solid var(--glass-border); color: #fff; font-weight: 500; font-size: 0.9rem;
+            max-width: 230px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .file-badge i { color: var(--accent); width: 1.2rem; height: 1.2rem; }
+
+        .action-btn {
+            background: transparent; border: 1px solid transparent; color: var(--text-main);
+            padding: 0.5rem 1rem; border-radius: 1rem; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            display: flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
+        }
+        .action-btn:hover { background: var(--glass-hover); border-color: var(--glass-border); }
+        .action-btn.danger { color: #f87171; }
+        .action-btn.danger:hover { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
+
+        #sandbox-console {
+            position: absolute; left: 2rem; bottom: 6rem; width: 450px; height: 300px;
+            background: rgba(7, 11, 20, 0.96); backdrop-filter: blur(20px); border: 1px solid var(--glass-border);
+            border-radius: 1rem; display: none; flex-direction: column; overflow: hidden; box-shadow: var(--glass-shadow); z-index: 45;
+        }
+        .console-head { background: rgba(255,255,255,0.03); padding: 0.8rem 1rem; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; display: flex; justify-content: space-between; border-bottom: 1px solid var(--glass-border); }
+        .console-body { flex: 1; padding: 1rem; overflow-y: auto; font-family: "JetBrains Mono", monospace; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .log-line { color: var(--text-main); word-break: break-all; line-height: 1.4; }
+        .log-line.system { color: var(--accent); }
+        .log-line.error { color: #f87171; }
     </style>
 </head>
 <body>
@@ -225,382 +331,569 @@
         <div class="liquid-blob blob-2"></div>
     </div>
 
-    <div class="interface-layer">
+    <div class="app-container">
         
-        <div id="upload-screen">
-            <div class="brand-header">
-                <h1 class="brand-logo">Flash Filer</h1>
-                <p class="brand-tagline">
-                    Premium Media & Secure Application Runtime
-                    <button class="info-toggle-btn" id="info-btn" title="Toggle Documentation">
-                        <i data-lucide="info"></i>
-                    </button>
-                </p>
+        <div id="dashboard-view">
+            <div class="hero-header">
+                <h1 class="hero-logo">Flash Filer</h1>
+                <div class="hero-tagline">
+                    Media Storage & Code Sandbox Runtime
+                    <button class="info-btn" id="btn-toggle-info"><i data-lucide="cpu"></i></button>
+                </div>
             </div>
 
             <div class="info-grid" id="info-grid">
-                <div class="info-square">
-                    <h3>Isolated Runtime</h3>
-                    <p>Flash Filer mounts locally designated resources inside an explicit hardware-accelerated memory stack configuration safely.</p>
+                <div class="info-card">
+                    <h3>Multi-File Queues</h3>
+                    <p>Load single codesets or array packages of multi-track media files simultaneously into volatile memory chains.</p>
                 </div>
-                <div class="info-square">
-                    <h3>Unified Player</h3>
-                    <p>Integrated Plyr configuration architectures route media execution bypassing typical browser CSP structure controls dynamically.</p>
+                <div class="info-card">
+                    <h3>Smart State Storage</h3>
+                    <p>Leverages LocalStorage sandboxes to snapshot your security authorization tokens and active compiler worksets.</p>
                 </div>
-                <div class="info-square">
-                    <h3>App Storage Stack</h3>
-                    <p>Connect repositories, local script environments, and custom application nodes instantly inside native view engines.</p>
+                <div class="info-card">
+                    <h3>Dual-Core Sandbox</h3>
+                    <p>Automatically channels scripts to localized runtime evaluation layers if secure external access nodes are offline.</p>
                 </div>
             </div>
 
-            <div class="home-dock">
-                <div class="dock-item" onclick="triggerFileSelect()">
-                    <i data-lucide="file-plus"></i>
-                    <span class="dock-label">Import Document</span>
+            <div class="dock-container">
+                <div class="dock-item" onclick="document.getElementById('file-input').click()">
+                    <i data-lucide="folder-open"></i>
+                    <span class="dock-tooltip">Import Media / Playlist</span>
                 </div>
-                <div class="dock-item" id="store-trigger-btn">
-                    <i data-lucide="shopping-bag"></i>
-                    <span class="dock-label">App Store</span>
+                <div class="dock-item" id="btn-open-store">
+                    <i data-lucide="layout-grid"></i>
+                    <span class="dock-tooltip">Module Store</span>
                 </div>
-                <div class="dock-item" onclick="launchAboutBlank()">
+                <div class="dock-item" id="btn-open-ide">
+                    <i data-lucide="code-2"></i>
+                    <span class="dock-tooltip">Flash IDE</span>
+                </div>
+                <div class="dock-item" onclick="window.open('about:blank', '_blank')">
                     <i data-lucide="external-link"></i>
-                    <span class="dock-label">Open about:blank</span>
+                    <span class="dock-tooltip">Blank Window</span>
                 </div>
             </div>
             
-            <input type="file" id="file-input" accept="image/*,video/*,audio/*,.html">
-            <div id="buffer-loader">Assembling Sandbox Buffer Track Array...</div>
+            <input type="file" id="file-input" style="display: none;" accept="image/*,video/*,audio/*,.html,text/html" multiple>
         </div>
 
-        <div id="app-store-view">
-            <div class="store-header">
-                <div class="store-title">
-                    <h2>Discover</h2>
-                    <p>Curated software arrays and tools for Flash Filer</p>
-                </div>
-                <button class="close-store-btn" id="close-store-btn">
-                    <i data-lucide="x"></i>
-                </button>
+        <div id="store-overlay" class="panel-overlay">
+            <div class="panel-header">
+                <h2>Module Core Architecture</h2>
+                <button class="btn-close" id="btn-close-store"><i data-lucide="x"></i></button>
             </div>
+            <div class="store-grid" id="store-wrapper-grid"></div>
+        </div>
 
-            <div class="store-grid">
-                <div class="store-card">
-                    <div class="app-icon-mock"><i data-lucide="terminal"></i></div>
-                    <div class="app-meta">
-                        <h4>Terminal Pro</h4>
-                        <p>Advanced system bash shell client emulator.</p>
-                        <button class="get-btn">GET</button>
-                    </div>
+        <div id="ide-overlay" class="panel-overlay">
+            <div class="panel-header">
+                <h2>Flash Engine Terminal</h2>
+                <div class="header-actions">
+                    <input type="password" id="ide-auth-token" class="token-input" placeholder="Piston Token (Persisted)">
+                    <select class="lang-selector" id="language-select"></select>
+                    <button class="btn-run" id="btn-execute-code">
+                        <i data-lucide="play" style="width:16px; height:16px; fill:currentColor;"></i>
+                        <span>Run Engine</span>
+                    </button>
+                    <button class="btn-close" id="btn-close-ide"><i data-lucide="x"></i></button>
                 </div>
-                <div class="store-card">
-                    <div class="app-icon-mock" style="background: linear-gradient(135deg, #10b981, #059669);"><i data-lucide="code-2"></i></div>
-                    <div class="app-meta">
-                        <h4>CodeEdit Live</h4>
-                        <p>Realtime HTML/JS compiler IDE text tool.</p>
-                        <button class="get-btn">GET</button>
-                    </div>
+            </div>
+            <div class="ide-workspace">
+                <div class="editor-section">
+                    <textarea class="code-textarea" id="code-editor" spellcheck="false"></textarea>
                 </div>
-                <div class="store-card">
-                    <div class="app-icon-mock" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i data-lucide="gamepad-2"></i></div>
-                    <div class="app-meta">
-                        <h4>Retro Arcade</h4>
-                        <p>Integrated WASM emulator node wrapper.</p>
-                        <button class="get-btn">GET</button>
-                    </div>
+                <div class="terminal-section">
+                    <div class="terminal-header">Console Pipeline Output</div>
+                    <div class="terminal-output" id="terminal-console"></div>
                 </div>
             </div>
         </div>
 
-        <div id="viewer-container">
-            
-            <div id="content-area"></div>
+        <div id="viewer-environment">
+            <div class="render-target" id="render-target"></div>
 
-            <div id="spotify-player-layer">
-                <div class="spotify-card">
-                    <div class="album-art-placeholder">
-                        <i data-lucide="music-4"></i>
-                    </div>
-                    <div class="track-details">
-                        <h3 id="audio-track-title">Track Title</h3>
-                        <p>Local Audio Resource Node</p>
-                    </div>
-                    <div class="spotify-controls-wrap" id="audio-mount-point"></div>
+            <div class="hover-trigger-zone"></div>
+            <div class="floating-action-bar">
+                <div class="file-badge" id="active-file-name">
+                    <span id="active-file-icon"><i data-lucide="file"></i></span> 
+                    <span id="active-file-text" style="margin-left:0.5rem;">No File Stack</span>
                 </div>
+                <button class="action-btn" id="btn-refresh-html" style="display: none;"><i data-lucide="refresh-cw"></i> Reload</button>
+                <button class="action-btn" id="btn-toggle-console" style="display: none;"><i data-lucide="terminal"></i> Console</button>
+                <button class="action-btn danger" id="btn-close-viewer"><i data-lucide="log-out"></i> Exit</button>
             </div>
 
-            <div id="sandbox-console-drawer">
-                <div class="console-header">
-                    <span>Diagnostic Log Receiver</span>
-                    <i data-lucide="terminal" style="width:14px;height:14px;"></i>
+            <div id="sandbox-console">
+                <div class="console-head">
+                    <span>Virtual I/O Logs</span>
+                    <i data-lucide="activity" style="width:14px;height:14px;"></i>
                 </div>
-                <div class="console-logs" id="console-logs-target">
-                    <div class="log-line">> Sandbox debug kernel established. Listening for thread entries...</div>
-                </div>
+                <div class="console-body" id="console-output"></div>
             </div>
-
-            <div id="overlay-trigger"></div>
-            <div id="bottom-overlay">
-                <span id="file-name"><i data-lucide="file-text"></i> Processing Instance</span>
-                
-                <button class="overlay-btn" id="html-refresh-btn" style="display: none;">
-                    <i data-lucide="refresh-cw"></i> Refresh App
-                </button>
-                <button class="overlay-btn" id="html-console-btn" style="display: none;">
-                    <i data-lucide="terminal"></i> Open Console
-                </button>
-                
-                <button class="overlay-btn exit" id="close-btn">
-                    <i data-lucide="log-out"></i> Close Instance
-                </button>
-            </div>
-
         </div>
+
     </div>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-
     <script>
-        {
-            const fileInput = document.getElementById('file-input');
-            const uploadScreen = document.getElementById('upload-screen');
-            const viewerContainer = document.getElementById('viewer-container');
-            const contentArea = document.getElementById('content-area');
-            const spotifyPlayerLayer = document.getElementById('spotify-player-layer');
-            const closeBtn = document.getElementById('close-btn');
-            const fileNameDisplay = document.getElementById('file-name');
-            const infoBtn = document.getElementById('info-btn');
-            const infoGrid = document.getElementById('info-grid');
-            const bufferLoader = document.getElementById('buffer-loader');
-            
-            const storeTriggerBtn = document.getElementById('store-trigger-btn');
-            const appStoreView = document.getElementById('app-store-view');
-            const closeStoreBtn = document.getElementById('close-store-btn');
+        const STORE_GAMES = [
+            { url: "1.12.html", title: "Eaglercraft 1.12", category: "Sandbox", featured: true },
+            { url: "1.8.html", title: "Eaglercraft 1.8", category: "Sandbox", featured: true },
+            { url: "cookieclicker.htm", title: "Cookie Clicker", category: "Casual", featured: false },
+            { url: "geometrydash.html", title: "Geometry Dash", category: "Platformer", featured: true }
+        ];
 
-            // Dynamic Hover Bar Extensions
-            const htmlRefreshBtn = document.getElementById('html-refresh-btn');
-            const htmlConsoleBtn = document.getElementById('html-console-btn');
-            const sandboxConsoleDrawer = document.getElementById('sandbox-console-drawer');
-            const consoleLogsTarget = document.getElementById('console-logs-target');
-            const audioTrackTitle = document.getElementById('audio-track-title');
+        const LANGUAGES = {
+            js: { name: "JavaScript (Local Fallback Ready)", lang: "javascript", version: "18.15.0", default: "const flashText = 'Flash Filer Core Active.';\nconsole.log(flashText);\n\n// Run standard math computation loops\nfor (let i = 1; i <= 3; i++) {\n    console.log(`Core Thread Matrix Segment: ${i * 5}`);\n}" },
+            py: { name: "Python 3 Engine", lang: "python", version: "3.10.0", default: "import sys\nprint('Python operational container context running.')\nprint(f'Runtime Platform Protocol: {sys.version}')" },
+            cpp: { name: "C++ (Container Compiling)", lang: "c++", version: "10.2.0", default: "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Isolated execution loop complete via C++ standard IO.\" << endl;\n    return 0;\n}" }
+        };
 
-            let plyrInstance = null;
-            let currentObjectUrl = null;
-            let activeHtmlPayload = "";
-
-            // Init Lucide Icons Engine
+        document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
 
-            // Setup Navigation Listeners
-            infoBtn.addEventListener('click', () => {
-                infoGrid.classList.toggle('expanded');
-                infoBtn.classList.toggle('active');
+            // Dom Nodes Mapping
+            const viewDashboard = document.getElementById('dashboard-view');
+            const viewEnvironment = document.getElementById('viewer-environment');
+            const renderTarget = document.getElementById('render-target');
+            const storeOverlay = document.getElementById('store-overlay');
+            const ideOverlay = document.getElementById('ide-overlay');
+            
+            const fileInput = document.getElementById('file-input');
+            const fileNameDisplay = document.getElementById('active-file-text');
+            const fileIconContainer = document.getElementById('active-file-icon');
+            const infoGrid = document.getElementById('info-grid');
+            const storeGrid = document.getElementById('store-wrapper-grid');
+            const consoleOutput = document.getElementById('console-output');
+            const terminalConsole = document.getElementById('terminal-console');
+            
+            const selectLang = document.getElementById('language-select');
+            const editor = document.getElementById('code-editor');
+            const ideAuthToken = document.getElementById('ide-auth-token');
+
+            // Global Playlist State Engine Storage arrays
+            let audioPlaylistQueue = [];
+            let currentTrackIndex = 0;
+
+            // Load persisted state properties out of browser LocalStorage
+            if(localStorage.getItem('flash_ide_token')) {
+                ideAuthToken.value = localStorage.getItem('flash_ide_token');
+            }
+
+            document.getElementById('btn-toggle-info').addEventListener('click', (e) => {
+                e.currentTarget.classList.toggle('active');
+                infoGrid.classList.toggle('active');
+            });
+            document.getElementById('btn-open-store').addEventListener('click', () => storeOverlay.classList.add('active'));
+            document.getElementById('btn-close-store').addEventListener('click', () => storeOverlay.classList.remove('active'));
+            document.getElementById('btn-open-ide').addEventListener('click', () => ideOverlay.classList.add('active'));
+            document.getElementById('btn-close-ide').addEventListener('click', () => ideOverlay.classList.remove('active'));
+            
+            const btnRefreshHtml = document.getElementById('btn-refresh-html');
+            const btnToggleConsole = document.getElementById('btn-toggle-console');
+            const sandboxConsole = document.getElementById('sandbox-console');
+            
+            document.getElementById('btn-close-viewer').addEventListener('click', () => {
+                cleanupEnvironment();
+                viewEnvironment.style.display = 'none';
+                viewDashboard.style.display = 'flex';
             });
 
-            storeTriggerBtn.addEventListener('click', () => { appStoreView.style.display = 'flex'; });
-            closeStoreBtn.addEventListener('click', () => { appStoreView.style.display = 'none'; });
+            let activePlyr = null;
+            let activeObjectUrl = null;
+            let activeHtmlCode = "";
+            let isUrlLaunch = false;
 
-            // File Selection Target Routing
-            window.triggerFileSelect = function() { fileInput.click(); };
+            // Generate selection tokens matching IDE infrastructure specs
+            Object.keys(LANGUAGES).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k; opt.textContent = LANGUAGES[k].name;
+                selectLang.appendChild(opt);
+            });
 
-            // Handle Cross-Environment Message Streams safely
-            window.addEventListener('message', function(e) {
-                if (e.data && e.data.source === 'flash-sandbox-logger') {
-                    pushConsoleLine(e.data.text, e.data.type);
+            const syncEditorCode = () => {
+                const langKey = selectLang.value;
+                const cachedCode = localStorage.getItem(`flash_code_${langKey}`);
+                editor.value = cachedCode ? cachedCode : LANGUAGES[langKey].default;
+            };
+
+            selectLang.addEventListener('change', syncEditorCode);
+            editor.addEventListener('input', () => {
+                localStorage.setItem(`flash_code_${selectLang.value}`, editor.value);
+            });
+            ideAuthToken.addEventListener('input', () => {
+                localStorage.setItem('flash_ide_token', ideAuthToken.value.trim());
+            });
+
+            syncEditorCode();
+            terminalConsole.innerHTML = `<span class="output-system">> Flash Virtual Compiler standard pipeline online. Ready to deploy scripts.</span>`;
+
+            // Overwrite default layout indentation handling inside code textarea
+            editor.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const s = editor.selectionStart; const end = editor.selectionEnd;
+                    editor.value = editor.value.substring(0, s) + "    " + editor.value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = s + 4;
                 }
             });
 
-            function pushConsoleLine(text, type = 'log') {
-                const line = document.createElement('div');
-                line.className = `log-line ${type}`;
-                line.textContent = `> [${type.toUpperCase()}] ${text}`;
-                consoleLogsTarget.appendChild(line);
-                consoleLogsTarget.scrollTop = consoleLogsTarget.scrollHeight;
-            }
+            // MULTI-LANGUAGE CONTAINER EXECUTION PIPELINE
+            document.getElementById('btn-execute-code').addEventListener('click', async () => {
+                const selected = LANGUAGES[selectLang.value];
+                const code = editor.value;
+                const token = ideAuthToken.value.trim();
 
-            // About Blank Delivery Pipeline
-            window.launchAboutBlank = function() {
-                const cleanWin = window.open('about:blank', '_blank');
-                if (cleanWin) {
-                    const doc = cleanWin.document;
-                    doc.open();
-                    doc.write(document.documentElement.outerHTML);
-                    doc.close();
+                terminalConsole.innerHTML = `<span class="output-system"><i data-lucide="loader" class="spin" style="width:13px;height:13px;vertical-align:middle;margin-right:0.4rem;"></i>Contacting processing core context...</span>`;
+                lucide.createIcons();
+
+                // Divert processing chain locally if JavaScript evaluation engine doesn't detect access tokens
+                if (selected.lang === 'javascript' && !token) {
+                    terminalConsole.innerHTML = `<span class="output-warn">> [Runtime Notice] Local Token absent. Executing payload inside Isolated Browser Evaluator context...</span>\n`;
+                    try {
+                        let caughtLogs = [];
+                        const localContextEval = new Function('console', code);
+                        const mockConsole = { 
+                            log: (...args) => caughtLogs.push(args.join(' ')), 
+                            error: (...args) => caughtLogs.push("[ERR] " + args.join(' ')), 
+                            warn: (...args) => caughtLogs.push("[WARN] " + args.join(' ')) 
+                        };
+                        localContextEval(mockConsole);
+                        
+                        const printLine = document.createElement('div');
+                        printLine.textContent = caughtLogs.join('\n') || "Process executed natively with no data piped to the console pipeline stream.";
+                        terminalConsole.appendChild(printLine);
+                    } catch(evalErr) {
+                        const errLine = document.createElement('div');
+                        errLine.className = 'output-error';
+                        errLine.textContent = `Evaluation Exception: ${evalErr.message}`;
+                        terminalConsole.appendChild(errLine);
+                    }
+                    return;
+                }
+
+                // External Sandbox Network Container Route
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    const res = await fetch('https://emkc.org/api/v2/piston/execute', {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({ language: selected.lang, version: selected.version, files: [{ content: code }] })
+                    });
+
+                    if (res.status === 401) {
+                        throw new Error("401 Unauthorized API Exception. The Piston API requires an authorization validation header. Use JavaScript to leverage local engine bypass lines.");
+                    }
+                    if (!res.ok) throw new Error(`External Container Core Exception [Status Code: ${res.status}]`);
+
+                    const data = await res.json();
+                    terminalConsole.innerHTML = '';
+
+                    if (data.run) {
+                        if (data.run.stdout) {
+                            const node = document.createElement('div'); node.textContent = data.run.stdout;
+                            terminalConsole.appendChild(node);
+                        }
+                        if (data.run.stderr) {
+                            const node = document.createElement('div'); node.className = 'output-error'; node.textContent = data.run.stderr;
+                            terminalConsole.appendChild(node);
+                        }
+                    }
+                } catch (err) {
+                    terminalConsole.innerHTML = `<span class="output-error">> Processing Fault: ${err.message}</span>`;
+                }
+            });
+
+            // GENERATE MODULE INTERFACE MATRIX
+            const buildStoreUI = () => {
+                storeGrid.innerHTML = '';
+                STORE_GAMES.forEach(g => {
+                    const card = document.createElement('div');
+                    card.className = 'store-card';
+                    if (g.featured) card.style.borderColor = 'var(--accent)';
+                    card.innerHTML = `
+                        <div class="app-icon" style="background: linear-gradient(135deg, #0ea5e9, #2563eb);">
+                            <i data-lucide="gamepad-2"></i>
+                        </div>
+                        <div class="app-info">
+                            <h4>${g.title}</h4>
+                            <p>${g.category}</p>
+                        </div>
+                        <button class="btn-get" data-url="${g.url}" data-title="${g.title}">LAUNCH</button>
+                    `;
+                    storeGrid.appendChild(card);
+                });
+                lucide.createIcons();
+            };
+            buildStoreUI();
+
+            storeGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-get')) {
+                    mountGameFromStore(e.target.getAttribute('data-url'), e.target.getAttribute('data-title'));
+                }
+            });
+
+            // MULTI-FILE ROUTING PIPELINE INGESTION LAYER
+            fileInput.addEventListener('change', (e) => {
+                const selectedFiles = Array.from(e.target.files);
+                if (selectedFiles.length === 0) return;
+
+                cleanupEnvironment();
+                isUrlLaunch = false;
+
+                // Detect if ingestion targets form an audio playlist stream array array
+                const allAudio = selectedFiles.every(f => f.type.startsWith('audio/'));
+
+                if (allAudio) {
+                    audioPlaylistQueue = selectedFiles;
+                    currentTrackIndex = 0;
+                    
+                    // Mirror playlist name arrays into local storage tracker lines
+                    const playlistNames = audioPlaylistQueue.map(f => f.name);
+                    localStorage.setItem('flash_playlist_manifest', JSON.stringify(playlistNames));
+                    
+                    fileNameDisplay.textContent = `Playlist (${audioPlaylistQueue.length} Tracks)`;
+                    mountAudioPlaylistCore();
+                } else {
+                    // Standard isolated item mapping fallback routines
+                    const file = selectedFiles[0];
+                    fileNameDisplay.textContent = file.name;
+                    if (file.type.startsWith('image/')) mountImage(file);
+                    else if (file.type.startsWith('video/')) mountVideo(file);
+                    else if (file.type === 'text/html' || file.name.endsWith('.html')) mountHTML(file);
+                }
+                
+                viewDashboard.style.display = 'none';
+                viewEnvironment.style.display = 'block';
+                fileInput.value = '';
+            });
+
+            const mountImage = (file) => {
+                setContext('media', 'image');
+                activeObjectUrl = URL.createObjectURL(file);
+                renderTarget.innerHTML = `<img src="${activeObjectUrl}" class="image-frame">`;
+            };
+
+            const mountVideo = (file) => {
+                setContext('media', 'video');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    renderTarget.innerHTML = `<div class="video-wrapper"><video id="plyr-target" playsinline controls src="${e.target.result}"></video></div>`;
+                    activePlyr = new Plyr('#plyr-target');
+                };
+                reader.readAsDataURL(file);
+            };
+
+            // PREMIUM MULTI-TRACK AUDIO PLAYLIST MANAGEMENT ARCHITECTURE
+            const mountAudioPlaylistCore = () => {
+                setContext('media', 'music');
+                
+                renderTarget.innerHTML = `
+                    <div class="audio-workspace-container">
+                        <div class="spotify-card">
+                            <div class="spot-art"><i data-lucide="music-2"></i></div>
+                            <div class="spot-info">
+                                <div class="spot-meta">
+                                    <h4 class="spot-title" id="spot-track-title">Loading Track...</h4>
+                                    <p class="spot-artist" id="spot-track-meta">Queue Track Matrix</p>
+                                </div>
+                                <button class="spot-btn" id="spot-heart-btn"><i data-lucide="heart"></i></button>
+                            </div>
+                            <div class="spot-progress-container">
+                                <div class="spot-slider-wrapper" id="spot-slider">
+                                    <div class="spot-progress-bar" id="spot-progress"></div>
+                                </div>
+                                <div class="spot-time"><span id="spot-current">0:00</span><span id="spot-duration">0:00</span></div>
+                            </div>
+                            <div class="spot-controls">
+                                <button class="spot-btn" id="spot-shuffle"><i data-lucide="shuffle" style="width:16px;"></i></button>
+                                <button class="spot-btn" id="spot-prev-track"><i data-lucide="skip-back" style="width:20px;"></i></button>
+                                <button class="spot-btn play-pause" id="spot-play-toggle"><i data-lucide="play" style="width:18px;margin-left:2px;"></i></button>
+                                <button class="spot-btn" id="spot-next-track"><i data-lucide="skip-forward" style="width:20px;"></i></button>
+                                <button class="spot-btn" id="spot-repeat"><i data-lucide="repeat" style="width:16px;"></i></button>
+                            </div>
+                            <audio id="spot-audio-element" style="display:none;"></audio>
+                        </div>
+
+                        <div class="playlist-panel">
+                            <div class="playlist-header">
+                                <span>Track Queue Registry</span>
+                                <span style="color:var(--accent); font-weight:800;" id="playlist-index-counter">0/0</span>
+                            </div>
+                            <div class="playlist-items" id="playlist-items-render-box"></div>
+                        </div>
+                    </div>`;
+                
+                lucide.createIcons();
+                renderPlaylistDomElements();
+                loadSelectedPlaylistTrack(currentTrackIndex, false);
+            };
+
+            const renderPlaylistDomElements = () => {
+                const box = document.getElementById('playlist-items-render-box');
+                box.innerHTML = '';
+                audioPlaylistQueue.forEach((file, index) => {
+                    const row = document.createElement('div');
+                    row.className = `playlist-track ${index === currentTrackIndex ? 'active' : ''}`;
+                    row.setAttribute('data-index', index);
+                    row.innerHTML = `
+                        <i data-lucide="${index === currentTrackIndex ? 'disc' : 'music'}" style="width:15px;height:15px;" class="${index === currentTrackIndex ? 'spin' : ''}"></i>
+                        <span class="playlist-track-name">${file.name}</span>
+                    `;
+                    row.addEventListener('click', () => {
+                        loadSelectedPlaylistTrack(index, true);
+                    });
+                    box.appendChild(row);
+                });
+                lucide.createIcons();
+                document.getElementById('playlist-index-counter').textContent = `${currentTrackIndex + 1}/${audioPlaylistQueue.length}`;
+            };
+
+            const loadSelectedPlaylistTrack = (index, autoPlayTrigger = true) => {
+                if (index < 0 || index >= audioPlaylistQueue.length) return;
+                currentTrackIndex = index;
+
+                const file = audioPlaylistQueue[currentTrackIndex];
+                document.getElementById('spot-track-title').textContent = file.name;
+                
+                const audioEl = document.getElementById('spot-audio-element');
+                const playToggle = document.getElementById('spot-play-toggle');
+                const progressBar = document.getElementById('spot-progress');
+                const sliderWrapper = document.getElementById('spot-slider');
+
+                if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+                activeObjectUrl = URL.createObjectURL(file);
+                audioEl.src = activeObjectUrl;
+
+                renderPlaylistDomElements();
+
+                // Setup listener linkages across single audio layout frames
+                audioEl.onloadedmetadata = () => { document.getElementById('spot-duration').textContent = formatTime(audioEl.duration); };
+                audioEl.ontimeupdate = () => {
+                    progressBar.style.width = `${(audioEl.currentTime / audioEl.duration) * 100 || 0}%`;
+                    document.getElementById('spot-current').textContent = formatTime(audioEl.currentTime);
+                };
+
+                // Track Auto-Advance Loop Pipeline
+                audioEl.onended = () => {
+                    if (currentTrackIndex + 1 < audioPlaylistQueue.length) {
+                        loadSelectedPlaylistTrack(currentTrackIndex + 1, true);
+                    } else {
+                        // Return loop structure directly back to playlist entry node [0]
+                        loadSelectedPlaylistTrack(0, true);
+                    }
+                };
+
+                sliderWrapper.onclick = (ev) => {
+                    audioEl.currentTime = ((ev.clientX - sliderWrapper.getBoundingClientRect().left) / sliderWrapper.getBoundingClientRect().width) * audioEl.duration;
+                };
+
+                const executePlayStateAction = () => {
+                    audioEl.play();
+                    playToggle.innerHTML = `<i data-lucide="pause" style="width:18px;"></i>`;
+                    lucide.createIcons();
+                };
+
+                const executePauseStateAction = () => {
+                    audioEl.pause();
+                    playToggle.innerHTML = `<i data-lucide="play" style="width:18px;margin-left:2px;"></i>`;
+                    lucide.createIcons();
+                };
+
+                playToggle.onclick = () => { audioEl.paused ? executePlayStateAction() : executePauseStateAction(); };
+                
+                document.getElementById('spot-next-track').onclick = () => {
+                    const target = (currentTrackIndex + 1 < audioPlaylistQueue.length) ? currentTrackIndex + 1 : 0;
+                    loadSelectedPlaylistTrack(target, true);
+                };
+                document.getElementById('spot-prev-track').onclick = () => {
+                    const target = (currentTrackIndex - 1 >= 0) ? currentTrackIndex - 1 : audioPlaylistQueue.length - 1;
+                    loadSelectedPlaylistTrack(target, true);
+                };
+
+                if (autoPlayTrigger) { executePlayStateAction(); } else { executePauseStateAction(); }
+            };
+
+            const mountHTML = (file) => {
+                setContext('html', 'file-code-2');
+                const reader = new FileReader();
+                reader.onload = (e) => { activeHtmlCode = e.target.result; compileHTMLSandbox(); };
+                reader.readAsText(file);
+            };
+
+            const mountGameFromStore = async (url, title) => {
+                cleanupEnvironment();
+                isUrlLaunch = true;
+                fileNameDisplay.textContent = title;
+                setContext('html', 'gamepad-2');
+                storeOverlay.classList.remove('active');
+                
+                viewDashboard.style.display = 'none';
+                viewEnvironment.style.display = 'block';
+                
+                renderTarget.innerHTML = `<div style="color:var(--text-muted);"><i data-lucide="loader" class="spin" style="width:20px;margin-right:0.5rem;vertical-align:middle;"></i>Initializing module segments...</div>`;
+                lucide.createIcons();
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error();
+                    activeHtmlCode = await response.text();
+                    compileHTMLSandbox();
+                } catch {
+                    renderTarget.innerHTML = `<div style="text-align:center; padding:2rem; background:rgba(239,68,68,0.04); border-radius:1rem; border:1px solid rgba(239,68,68,0.15); max-width:400px;"><i data-lucide="alert-circle" style="color:#f87171;width:40px;height:40px;"></i><h4 style="color:#f87171;margin:0.5rem 0;">Flash Sandbox Execution Blended</h4><p style="font-size:0.85rem;color:var(--text-muted);margin:0;">Failed to fetch file. Verify that server routing path layers are locally initialized.</p></div>`;
+                    lucide.createIcons();
                 }
             };
 
-            fileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                fileNameDisplay.innerHTML = `<i data-lucide="file-text"></i> ${file.name}`;
-                contentArea.innerHTML = ''; 
-                cleanActiveInstances();
-                lucide.createIcons();
-
-                const fileType = file.type;
-
-                // 1. IMAGES
-                if (fileType.startsWith('image/')) {
-                    toggleHtmlControls(false);
-                    const frame = document.createElement('div');
-                    frame.className = 'premium-image-frame';
-                    const img = document.createElement('img');
-                    currentObjectUrl = URL.createObjectURL(file);
-                    img.src = currentObjectUrl;
-                    img.className = 'premium-image';
-                    frame.appendChild(img);
-                    contentArea.appendChild(frame);
-                    launchWorkspaceView(false);
-
-                // 2. VIDEOS
-                } else if (fileType.startsWith('video/')) {
-                    toggleHtmlControls(false);
-                    bufferLoader.style.display = 'block';
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(evt) {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'plyr-video-container';
-                        const video = document.createElement('video');
-                        video.id = 'flash-plyr';
-                        video.setAttribute('playsinline', '');
-                        video.setAttribute('controls', '');
-                        video.src = evt.target.result;
-                        
-                        wrapper.appendChild(video);
-                        contentArea.appendChild(wrapper);
-                        
-                        plyrInstance = new Plyr('#flash-plyr', {
-                            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
-                        });
-                        
-                        bufferLoader.style.display = 'none';
-                        launchWorkspaceView(false);
-                    };
-                    reader.readAsDataURL(file);
-
-                // 3. AUDIOS (Immersive Spotify Player Configuration)
-                } else if (fileType.startsWith('audio/')) {
-                    toggleHtmlControls(false);
-                    bufferLoader.style.display = 'block';
-                    audioTrackTitle.textContent = file.name;
-                    const reader = new FileReader();
-
-                    reader.onload = function(evt) {
-                        const mount = document.getElementById('audio-mount-point');
-                        mount.innerHTML = `<audio id="flash-plyr" controls src="${evt.target.result}"></audio>`;
-                        
-                        plyrInstance = new Plyr('#flash-plyr', {
-                            controls: ['play', 'progress', 'current-time', 'duration', 'mute', 'volume']
-                        });
-                        
-                        bufferLoader.style.display = 'none';
-                        launchWorkspaceView(true); // true parameter sets up Spotify View state explicitly
-                        plyrInstance.play();
-                    };
-                    reader.readAsDataURL(file);
-
-                // 4. EMBEDDED APPLICATIONS (HTML)
-                } else if (fileType === 'text/html' || file.name.endsWith('.html')) {
-                    toggleHtmlControls(true);
-                    const reader = new FileReader();
-                    reader.onload = function(evt) {
-                        activeHtmlPayload = evt.target.result;
-                        buildHTMLSandboxStack(activeHtmlPayload);
-                        launchWorkspaceView(false);
-                    };
-                    reader.readAsText(file);
-
-                // GENERAL FORMAT HANDLING FALLBACK
-                } else {
-                    toggleHtmlControls(false);
-                    const obj = document.createElement('object');
-                    currentObjectUrl = URL.createObjectURL(file);
-                    obj.data = currentObjectUrl;
-                    obj.style.width = '100%'; obj.style.height = '100%';
-                    contentArea.appendChild(obj);
-                    launchWorkspaceView(false);
-                }
-            });
-
-            function buildHTMLSandboxStack(htmlCode) {
-                contentArea.innerHTML = '';
+            const compileHTMLSandbox = () => {
+                renderTarget.innerHTML = '';
                 const iframe = document.createElement('iframe');
-                iframe.className = 'app-workspace-iframe';
-                
-                // Safe browser token break ensures parsing runtime executes smoothly without interface crashes
-                const sOpen = '<sc' + 'ript>';
-                const sClose = '</sc' + 'ript>';
+                iframe.className = 'iframe-sandbox';
+                iframe.srcdoc = `
+                    <script>
+                        window.onerror = (m,u,l) => { window.parent.postMessage({source:'flash',type:'error',text:m+' (Line '+l+')'}, '*'); return false; };
+                        ['log','warn','error'].forEach(t => {
+                            console[t] = (...args) => window.parent.postMessage({source:'flash',type:t,text:args.join(' ')}, '*');
+                        });
+                    <\/script>` + activeHtmlCode;
+                renderTarget.appendChild(iframe);
+            };
 
-                const interceptCode = sOpen + `
-                    window.onerror = function(msg, url, line) {
-                        window.parent.postMessage({source: 'flash-sandbox-logger', type: 'error', text: msg + ' (Line ' + line + ')'}, '*');
-                        return false;
-                    };
-                    ['log','warn','error'].forEach(type => {
-                        const original = console[type];
-                        console[type] = function(...args) {
-                            window.parent.postMessage({source: 'flash-sandbox-logger', type: type, text: args.join(' ')}, '*');
-                            original.apply(console, args);
-                        };
-                    });
-                ` + sClose;
-
-                iframe.srcdoc = interceptCode + htmlCode;
-                contentArea.appendChild(iframe);
-                pushConsoleLine("Application environment frame instance constructed successfully.");
-            }
-
-            function toggleHtmlControls(show) {
-                if (show) {
-                    htmlRefreshBtn.style.display = 'flex';
-                    htmlConsoleBtn.style.display = 'flex';
-                } else {
-                    htmlRefreshBtn.style.display = 'none';
-                    htmlConsoleBtn.style.display = 'none';
-                    sandboxConsoleDrawer.style.display = 'none';
-                }
-            }
-
-            htmlRefreshBtn.addEventListener('click', () => {
-                if (activeHtmlPayload) {
-                    pushConsoleLine("Instructing runtime hot reload command...", "warn");
-                    buildHTMLSandboxStack(activeHtmlPayload);
+            window.addEventListener('message', (e) => {
+                if (e.data && e.data.source === 'flash') {
+                    const line = document.createElement('div');
+                    line.className = `log-line ${e.data.type}`;
+                    line.textContent = `> [Engine] ${e.data.text}`;
+                    consoleOutput.appendChild(line);
+                    consoleOutput.scrollTop = consoleOutput.scrollHeight;
                 }
             });
 
-            htmlConsoleBtn.addEventListener('click', () => {
-                sandboxConsoleDrawer.style.display = sandboxConsoleDrawer.style.display === 'flex' ? 'none' : 'flex';
-            });
+            const setContext = (type, icon) => {
+                fileIconContainer.innerHTML = `<i data-lucide="${icon}"></i>`;
+                lucide.createIcons();
+                const isHtml = type === 'html';
+                btnRefreshHtml.style.display = (isHtml && !isUrlLaunch) ? 'flex' : 'none';
+                btnToggleConsole.style.display = isHtml ? 'flex' : 'none';
+                sandboxConsole.style.display = 'none';
+            };
 
-            function launchWorkspaceView(isAudio) {
-                uploadScreen.style.display = 'none';
-                viewerContainer.style.display = 'block';
-                if (isAudio) {
-                    contentArea.style.display = 'none';
-                    spotifyPlayerLayer.style.display = 'flex';
-                } else {
-                    contentArea.style.display = 'flex';
-                    spotifyPlayerLayer.style.display = 'none';
-                }
-            }
+            const cleanupEnvironment = () => {
+                if (activePlyr) { activePlyr.destroy(); activePlyr = null; }
+                if (activeObjectUrl) { URL.revokeObjectURL(activeObjectUrl); activeObjectUrl = null; }
+                activeHtmlCode = ""; renderTarget.innerHTML = '';
+                audioPlaylistQueue = [];
+                consoleOutput.innerHTML = '<div class="log-line system">> Runtime boundaries purged successfully.</div>';
+            };
 
-            function cleanActiveInstances() {
-                if (plyrInstance) { plyrInstance.destroy(); plyrInstance = null; }
-                if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); currentObjectUrl = null; }
-                activeHtmlPayload = "";
-                consoleLogsTarget.innerHTML = '<div class="log-line">> Sandbox debug kernel established. Listening for thread entries...</div>';
-            }
-
-            closeBtn.addEventListener('click', () => {
-                cleanActiveInstances();
-                contentArea.innerHTML = '';
-                toggleHtmlControls(false);
-                viewerContainer.style.display = 'none';
-                uploadScreen.style.display = 'flex';
-                fileInput.value = ''; 
-            });
-        }
+            const formatTime = (s) => isNaN(s) ? "0:00" : `${Math.floor(s/60)}:${Math.floor(s%60).toString().padStart(2,'0')}`;
+            btnRefreshHtml.addEventListener('click', compileHTMLSandbox);
+            btnToggleConsole.addEventListener('click', () => { sandboxConsole.style.display = sandboxConsole.style.display === 'flex' ? 'none' : 'flex'; });
+        });
     </script>
 </body>
 </html>
